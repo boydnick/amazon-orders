@@ -18,7 +18,7 @@ class TestTransaction(UnitTestCase):
             parsed = BeautifulSoup(f.read(), self.test_config.bs4_parser)
 
         # WHEN
-        transaction = Transaction(parsed, self.test_config, date(2024, 1, 1))
+        transaction = Transaction(parsed, self.test_config, date(2024, 1, 1), "Completed")
 
         # THEN
         self.assertEqual(transaction.completed_date, date(2024, 1, 1))
@@ -29,6 +29,7 @@ class TestTransaction(UnitTestCase):
         self.assertEqual(transaction.seller, "AMZN Mktp COM")
         self.assertEqual(transaction.grand_total, -12.34)
         self.assertEqual(transaction.is_refund, False)
+        self.assertEqual(transaction.status, "completed")
         self.assertEqual(str(transaction), "Transaction 2024-01-01: Order #123-4567890-1234567, Grand Total: -12.34")
         self.assertEqual(
             repr(transaction), '<Transaction 2024-01-01: "Order #123-4567890-1234567, Grand Total: -12.34">'
@@ -41,7 +42,7 @@ class TestTransaction(UnitTestCase):
             parsed = BeautifulSoup(f.read(), self.test_config.bs4_parser)
 
         # WHEN
-        transaction = Transaction(parsed, self.test_config, date(2024, 1, 1))
+        transaction = Transaction(parsed, self.test_config, date(2024, 1, 1), "Completed")
 
         # THEN
         self.assertEqual(transaction.completed_date, date(2024, 1, 1))
@@ -52,7 +53,32 @@ class TestTransaction(UnitTestCase):
         self.assertEqual(transaction.seller, "AMZN Mktp COM")
         self.assertEqual(transaction.grand_total, 12.34)
         self.assertEqual(transaction.is_refund, True)
+        self.assertEqual(transaction.status, "refund")
         self.assertEqual(str(transaction), "Transaction 2024-01-01: Order #123-4567890-1234567, Grand Total: 12.34")
         self.assertEqual(
             repr(transaction), '<Transaction 2024-01-01: "Order #123-4567890-1234567, Grand Total: 12.34">'
+        )
+
+    def test_parse_pending(self):
+        # GIVEN
+        with open(os.path.join(self.RESOURCES_DIR, "transactions", "transaction-pending-snippet.html"), "r",
+                  encoding="utf-8") as f:
+            parsed = BeautifulSoup(f.read(), self.test_config.bs4_parser)
+
+        # WHEN
+        transaction = Transaction(parsed, self.test_config, date(2024, 1, 1), "In Progress")
+
+        # THEN
+        self.assertEqual(transaction.completed_date, date(2024, 1, 1))
+        self.assertEqual(transaction.payment_method, "My Payment Method")
+        self.assertEqual(transaction.order_number, "123-4567890-1234567")
+        self.assertEqual(transaction.order_details_link,
+                         "https://www.amazon.com/gp/css/summary/edit.html?orderID=123-4567890-1234567")  # noqa
+        self.assertEqual(transaction.seller, "AMZN Mktp COM")
+        self.assertEqual(transaction.grand_total, -12.34)
+        self.assertEqual(transaction.is_refund, False)
+        self.assertEqual(transaction.status, "pending")
+        self.assertEqual(str(transaction), "Transaction 2024-01-01: Order #123-4567890-1234567, Grand Total: -12.34")
+        self.assertEqual(
+            repr(transaction), '<Transaction 2024-01-01: "Order #123-4567890-1234567, Grand Total: -12.34">'
         )

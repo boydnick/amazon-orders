@@ -23,7 +23,8 @@ class Transaction(Parsable):
     def __init__(self,
                  parsed: Tag,
                  config: AmazonOrdersConfig,
-                 completed_date: date) -> None:
+                 completed_date: date,
+                 section_status: str = "Unknown") -> None:
         super().__init__(parsed, config)
 
         #: The Transaction completed date.
@@ -44,6 +45,8 @@ class Transaction(Parsable):
         self.seller: str = self.safe_simple_parse(
             selector=self.config.selectors.FIELD_TRANSACTION_SELLER_NAME_SELECTOR
         )
+        #: The Transaction status.
+        self.status: str = self.safe_parse(self._parse_status, section_status)
 
     def __repr__(self) -> str:
         return f"<Transaction {self.completed_date}: \"Order #{self.order_number}, Grand Total: {self.grand_total}\">"
@@ -85,3 +88,30 @@ class Transaction(Parsable):
             value = f"{self.config.constants.ORDER_DETAILS_URL}?orderID={self.order_number}"
 
         return value
+
+    def _parse_status(self, section_status: str) -> str:
+        """
+        Parse transaction status from individual transaction or section status.
+        Returns one of: "pending", "completed", "refund"
+        """
+        # First check for individual transaction status (e.g., "Pending" in "In Progress" section)
+        individual_status = self.simple_parse(self.config.selectors.FIELD_TRANSACTION_STATUS_INDIVIDUAL_SELECTOR)
+        if individual_status:
+            individual_status = individual_status.strip().lower()
+            if individual_status == "pending":
+                return "pending"
+        
+        # Check if this is a refund based on order link text
+        order_link_text = self.simple_parse(self.config.selectors.FIELD_TRANSACTION_ORDER_LINK_SELECTOR)
+        if order_link_text and "refund:" in order_link_text.lower():
+            return "refund"
+        
+        # Fall back to section status
+        section_status = section_status.strip().lower()
+        if section_status == "completed":
+            return "completed"
+        elif section_status == "in progress":
+            return "pending"
+        else:
+            # Default based on refund status for backwards compatibility
+            return "refund" if self.is_refund else "completed"

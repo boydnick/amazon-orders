@@ -191,3 +191,7 @@ class Selectors:
         "div.apx-transactions-line-item-component-container a.a-link-normal"]
     FIELD_TRANSACTION_SELLER_NAME_SELECTOR = [
         "div.apx-transactions-line-item-component-container :has(a.a-link-normal) + div"]
+    FIELD_TRANSACTION_STATUS_SECTION_SELECTOR = [
+        "div.apx-transactions-sleeve-header-container span.a-text-bold"]
+    FIELD_TRANSACTION_STATUS_INDIVIDUAL_SELECTOR = [
+        "div.apx-transactions-line-item-component-container .a-color-base"]

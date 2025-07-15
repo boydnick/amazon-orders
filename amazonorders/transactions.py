@@ -21,6 +21,11 @@ def _parse_transaction_form_tag(form_tag: Tag,
                                 config: AmazonOrdersConfig) \
         -> Tuple[List[Transaction], Optional[Dict[str, str]]]:
     transactions = []
+    
+    # Find the section status (e.g., "Completed", "In Progress")
+    section_status_tag = util.select_one(form_tag, config.selectors.FIELD_TRANSACTION_STATUS_SECTION_SELECTOR)
+    section_status = section_status_tag.text.strip() if section_status_tag else "Unknown"
+    
     date_container_tags = util.select(form_tag, config.selectors.TRANSACTION_DATE_CONTAINERS_SELECTOR)
     for date_container_tag in date_container_tags:
         date_tag = util.select_one(date_container_tag, config.selectors.FIELD_TRANSACTION_COMPLETED_DATE_SELECTOR)
@@ -39,7 +44,7 @@ def _parse_transaction_form_tag(form_tag: Tag,
 
         transaction_tags = util.select(transactions_container_tag, config.selectors.TRANSACTIONS_SELECTOR)
         for transaction_tag in transaction_tags:
-            transaction = Transaction(transaction_tag, config, date)
+            transaction = Transaction(transaction_tag, config, date, section_status)
             transactions.append(transaction)
 
     form_state_input = util.select_one(form_tag, config.selectors.TRANSACTIONS_NEXT_PAGE_INPUT_STATE_SELECTOR)
