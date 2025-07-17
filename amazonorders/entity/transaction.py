@@ -46,7 +46,7 @@ class Transaction(Parsable):
             selector=self.config.selectors.FIELD_TRANSACTION_SELLER_NAME_SELECTOR
         )
         #: The Transaction status.
-        self.status: str = self.safe_parse(self._parse_status, section_status)
+        self.status: str = self.safe_parse(self._parse_status, section_status=section_status)
 
     def __repr__(self) -> str:
         return f"<Transaction {self.completed_date}: \"Order #{self.order_number}, Grand Total: {self.grand_total}\">"

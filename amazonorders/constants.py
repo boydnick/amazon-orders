@@ -17,12 +17,37 @@ class Constants:
     """
 
     ##########################################################################
+    # Region-specific settings
+    ##########################################################################
+
+    # Get region from environment variable
+    REGION = os.environ.get("AMAZON_REGION", "us").lower()
+    
+    # Region-specific configurations
+    REGION_CONFIGS = {
+        "us": {
+            "base_url": "https://www.amazon.com",
+            "assoc_handle": "usflex",
+            "language": "en-US,en;q=0.9",
+            "currency_symbol": "$"
+        },
+        "ca": {
+            "base_url": "https://www.amazon.ca",
+            "assoc_handle": "caflex", 
+            "language": "en-CA,en;q=0.9",
+            "currency_symbol": "C$"
+        }
+    }
+    
+    # Get region config, default to US if region not supported
+    REGION_CONFIG = REGION_CONFIGS.get(REGION, REGION_CONFIGS["us"])
+
+    ##########################################################################
     # General URL
     ##########################################################################
 
-    BASE_URL = os.environ.get("AMAZON_BASE_URL")
-    if not BASE_URL:
-        BASE_URL = "https://www.amazon.com"
+    # Allow AMAZON_BASE_URL to override region's base URL for backward compatibility
+    BASE_URL = os.environ.get("AMAZON_BASE_URL") or REGION_CONFIG["base_url"]
 
     ##########################################################################
     # URLs for AmazonSession
@@ -32,7 +57,7 @@ class Constants:
     SIGN_IN_QUERY_PARAMS = {"openid.pape.max_auth_age": "0",
                             "openid.return_to": f"{BASE_URL}/?ref_=nav_custrec_signin",
                             "openid.identity": "http://specs.openid.net/auth/2.0/identifier_select",
-                            "openid.assoc_handle": "usflex",
+                            "openid.assoc_handle": REGION_CONFIG["assoc_handle"],
                             "openid.mode": "checkid_setup",
                             "openid.claimed_id": "http://specs.openid.net/auth/2.0/identifier_select",
                             "openid.ns": "http://specs.openid.net/auth/2.0"}
@@ -61,7 +86,7 @@ class Constants:
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,"
                   "application/signed-exchange;v=b3;q=0.7",
         "Accept-Encoding": "gzip, deflate, br, zstd",
-        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Language": REGION_CONFIG["language"],
         "Cache-Control": "max-age=0",
         "Dpr": "2",
         "Ect": "4g",
@@ -97,7 +122,7 @@ class Constants:
     # Currency
     ##########################################################################
 
-    CURRENCY_SYMBOL = os.environ.get("AMAZON_CURRENCY_SYMBOL", "$")
+    CURRENCY_SYMBOL = os.environ.get("AMAZON_CURRENCY_SYMBOL", REGION_CONFIG["currency_symbol"])
 
     def format_currency(self,
                         amount: float) -> str:

@@ -111,6 +111,44 @@ class AmazonOrders:
 
         return asyncio.run(self._build_orders_async(next_page, keep_paging, full_details, current_index))
 
+    def get_recent_orders(self,
+                          days: int = 30,
+                          full_details: bool = False,
+                          keep_paging: bool = True) -> List[Order]:
+        """
+        Get recent Amazon Orders from the last N days using Amazon's native date filtering.
+        This is much more efficient than year-based fetching for recent updates.
+
+        :param days: Number of days to go back (30, 90, or custom range).
+        :param full_details: Get the full details for each Order in the history.
+        :param keep_paging: ``False`` if only one page should be fetched.
+        :return: A list of the requested Orders.
+        """
+        if not self.amazon_session.is_authenticated:
+            raise AmazonOrdersError("Call AmazonSession.login() to authenticate first.")
+
+        # Use Amazon's native time filters for efficiency
+        if days <= 30:
+            time_filter = "last30Days"
+        elif days <= 90:
+            time_filter = "last90Days"
+        else:
+            # For longer periods, fall back to year-based approach
+            current_year = datetime.date.today().year
+            return self.get_order_history(year=current_year, full_details=full_details, keep_paging=keep_paging)
+
+        next_page: Optional[str] = (
+            "{url}?{query_param}={time_filter}"
+        ).format(
+            url=self.config.constants.ORDER_HISTORY_URL,
+            query_param=self.config.constants.HISTORY_FILTER_QUERY_PARAM,
+            time_filter=time_filter
+        )
+
+        current_index = 0
+
+        return asyncio.run(self._build_orders_async(next_page, keep_paging, full_details, current_index))
+
     async def _build_orders_async(self,
                                   next_page: Optional[str],
                                   keep_paging: bool,
