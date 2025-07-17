@@ -80,11 +80,12 @@ class AmazonOrders:
                           year: int = datetime.date.today().year,
                           start_index: Optional[int] = None,
                           full_details: bool = False,
-                          keep_paging: bool = True) -> List[Order]:
+                          keep_paging: bool = True,
+                          time_filter: Optional[str] = None) -> List[Order]:
         """
-        Get the Amazon Order history for a given year.
+        Get the Amazon Order history for a given year or time period.
 
-        :param year: The year for which to get history.
+        :param year: The year for which to get history (ignored if time_filter is provided).
         :param start_index: The index of the Order from which to start fetching in the history. See
             :attr:`~amazonorders.entity.order.Order.index` to correlate, or if a call to this method previously errored
             out, see ``index`` in the exception's :attr:`~amazonorders.exception.AmazonOrdersError.meta` to continue
@@ -92,18 +93,25 @@ class AmazonOrders:
         :param full_details: Get the full details for each Order in the history. This will execute an additional
             request per Order.
         :param keep_paging: ``False`` if only one page should be fetched.
+        :param time_filter: Override year-based filtering. Supported values: 'last30', 'months-3', 'year-YYYY'.
         :return: A list of the requested Orders.
         """
         if not self.amazon_session.is_authenticated:
             raise AmazonOrdersError("Call AmazonSession.login() to authenticate first.")
 
+        # Use time_filter if provided, otherwise default to year-based filtering
+        if time_filter:
+            filter_param = time_filter
+        else:
+            filter_param = f"year-{year}"
+
         optional_start_index = f"&startIndex={start_index}" if start_index else ""
         next_page: Optional[str] = (
-            "{url}?{query_param}=year-{year}{optional_start_index}"
+            "{url}?{query_param}={filter_param}{optional_start_index}"
         ).format(
             url=self.config.constants.ORDER_HISTORY_URL,
             query_param=self.config.constants.HISTORY_FILTER_QUERY_PARAM,
-            year=year,
+            filter_param=filter_param,
             optional_start_index=optional_start_index
         )
 
@@ -118,36 +126,32 @@ class AmazonOrders:
         """
         Get recent Amazon Orders from the last N days using Amazon's native date filtering.
         This is much more efficient than year-based fetching for recent updates.
+        
+        **Deprecated**: Use get_order_history() with time_filter parameter instead.
 
         :param days: Number of days to go back (30, 90, or custom range).
         :param full_details: Get the full details for each Order in the history.
         :param keep_paging: ``False`` if only one page should be fetched.
         :return: A list of the requested Orders.
         """
-        if not self.amazon_session.is_authenticated:
-            raise AmazonOrdersError("Call AmazonSession.login() to authenticate first.")
-
+        import warnings
+        warnings.warn(
+            "get_recent_orders() is deprecated. Use get_order_history() with time_filter parameter instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        
         # Use Amazon's native time filters for efficiency
         if days <= 30:
-            time_filter = "last30Days"
+            time_filter = "last30"
         elif days <= 90:
-            time_filter = "last90Days"
+            time_filter = "months-3"
         else:
             # For longer periods, fall back to year-based approach
             current_year = datetime.date.today().year
             return self.get_order_history(year=current_year, full_details=full_details, keep_paging=keep_paging)
 
-        next_page: Optional[str] = (
-            "{url}?{query_param}={time_filter}"
-        ).format(
-            url=self.config.constants.ORDER_HISTORY_URL,
-            query_param=self.config.constants.HISTORY_FILTER_QUERY_PARAM,
-            time_filter=time_filter
-        )
-
-        current_index = 0
-
-        return asyncio.run(self._build_orders_async(next_page, keep_paging, full_details, current_index))
+        return self.get_order_history(time_filter=time_filter, full_details=full_details, keep_paging=keep_paging)
 
     async def _build_orders_async(self,
                                   next_page: Optional[str],
