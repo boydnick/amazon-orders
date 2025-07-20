@@ -80,11 +80,12 @@ class AmazonOrders:
                           year: int = datetime.date.today().year,
                           start_index: Optional[int] = None,
                           full_details: bool = False,
-                          keep_paging: bool = True) -> List[Order]:
+                          keep_paging: bool = True,
+                          time_filter: Optional[str] = None) -> List[Order]:
         """
         Get the Amazon Order history for a given year.
 
-        :param year: The year for which to get history.
+        :param year: The year for which to get history (ignored if time_filter is provided).
         :param start_index: The index of the Order from which to start fetching in the history. See
             :attr:`~amazonorders.entity.order.Order.index` to correlate, or if a call to this method previously errored
             out, see ``index`` in the exception's :attr:`~amazonorders.exception.AmazonOrdersError.meta` to continue
@@ -92,18 +93,23 @@ class AmazonOrders:
         :param full_details: Get the full details for each Order in the history. This will execute an additional
             request per Order.
         :param keep_paging: ``False`` if only one page should be fetched.
+        :param time_filter: Override year-based filtering. Supported values: 'last30', 'months-3', 'year-YYYY'.
         :return: A list of the requested Orders.
         """
         if not self.amazon_session.is_authenticated:
             raise AmazonOrdersError("Call AmazonSession.login() to authenticate first.")
 
         optional_start_index = f"&startIndex={start_index}" if start_index else ""
+        
+        # Use time_filter if provided, otherwise default to year-based filtering
+        filter_value = time_filter if time_filter else f"year-{year}"
+        
         next_page: Optional[str] = (
-            "{url}?{query_param}=year-{year}{optional_start_index}"
+            "{url}?{query_param}={filter_value}{optional_start_index}"
         ).format(
             url=self.config.constants.ORDER_HISTORY_URL,
             query_param=self.config.constants.HISTORY_FILTER_QUERY_PARAM,
-            year=year,
+            filter_value=filter_value,
             optional_start_index=optional_start_index
         )
 
