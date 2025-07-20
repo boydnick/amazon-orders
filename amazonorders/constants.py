@@ -20,9 +20,19 @@ class Constants:
     # General URL
     ##########################################################################
 
+    # Region configuration
+    REGION = os.environ.get("AMAZON_REGION", "US")
+    REGION_CONFIGS = {
+        "US": {
+            "base_url": "https://www.amazon.com",
+            "assoc_handle": "usflex",
+            "language": "en-US,en;q=0.9"
+        }
+    }
+
     BASE_URL = os.environ.get("AMAZON_BASE_URL")
     if not BASE_URL:
-        BASE_URL = "https://www.amazon.com"
+        BASE_URL = REGION_CONFIGS[REGION]["base_url"]
 
     ##########################################################################
     # URLs for AmazonSession
@@ -32,7 +42,7 @@ class Constants:
     SIGN_IN_QUERY_PARAMS = {"openid.pape.max_auth_age": "0",
                             "openid.return_to": f"{BASE_URL}/?ref_=nav_custrec_signin",
                             "openid.identity": "http://specs.openid.net/auth/2.0/identifier_select",
-                            "openid.assoc_handle": "usflex",
+                            "openid.assoc_handle": REGION_CONFIGS[REGION]["assoc_handle"],
                             "openid.mode": "checkid_setup",
                             "openid.claimed_id": "http://specs.openid.net/auth/2.0/identifier_select",
                             "openid.ns": "http://specs.openid.net/auth/2.0"}
@@ -61,7 +71,7 @@ class Constants:
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,"
                   "application/signed-exchange;v=b3;q=0.7",
         "Accept-Encoding": "gzip, deflate, br, zstd",
-        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Language": REGION_CONFIGS[REGION]["language"],
         "Cache-Control": "max-age=0",
         "Dpr": "2",
         "Ect": "4g",
