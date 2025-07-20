@@ -36,6 +36,8 @@ class Transaction(Parsable):
         self.grand_total: float = self.safe_parse(self._parse_grand_total)
         #: The Transaction was a refund or not.
         self.is_refund: bool = self.grand_total > 0
+        #: The Transaction is pending or not.
+        self.is_pending: bool = self.safe_parse(self._parse_is_pending)
         #: The Transaction Order number.
         self.order_number: str = self.safe_parse(self._parse_order_number)
         #: The Transaction Order details link.
@@ -77,6 +79,18 @@ class Transaction(Parsable):
         value = match.group(1) if match else ""
 
         return value
+
+    def _parse_is_pending(self) -> bool:
+        # Check if this transaction appears under an "In Progress" section
+        # by traversing up to find section headers
+        current = self.parsed
+        while current:
+            prev_sibling = current.find_previous_sibling()
+            if prev_sibling and prev_sibling.name in ['h2', 'h3', 'h4']:
+                if 'in progress' in prev_sibling.get_text().lower():
+                    return True
+            current = current.parent
+        return False
 
     def _parse_order_details_link(self) -> Optional[str]:
         value = self.simple_parse(self.config.selectors.FIELD_TRANSACTION_ORDER_LINK_SELECTOR, attr_name="href")
