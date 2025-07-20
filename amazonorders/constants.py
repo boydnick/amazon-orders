@@ -27,6 +27,11 @@ class Constants:
             "base_url": "https://www.amazon.com",
             "assoc_handle": "usflex",
             "language": "en-US,en;q=0.9"
+        },
+        "CA": {
+            "base_url": "https://www.amazon.ca",
+            "assoc_handle": "caflex",
+            "language": "en-CA,en;q=0.9"
         }
     }
 
