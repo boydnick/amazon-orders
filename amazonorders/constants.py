@@ -21,7 +21,7 @@ class Constants:
     ##########################################################################
 
     # Region configuration
-    REGION = os.environ.get("AMAZON_REGION", "US")
+    REGION = os.environ.get("AMAZON_REGION", "US").upper()
     REGION_CONFIGS = {
         "US": {
             "base_url": "https://www.amazon.com",
