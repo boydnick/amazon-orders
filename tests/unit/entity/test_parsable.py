@@ -1,9 +1,8 @@
 __copyright__ = "Copyright (c) 2024-2025 Alex Laird"
 __license__ = "MIT"
 
-from bs4 import BeautifulSoup
-
 from amazonorders.entity.parsable import Parsable
+from bs4 import BeautifulSoup
 from tests.unittestcase import UnitTestCase
 
 

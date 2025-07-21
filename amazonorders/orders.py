@@ -5,7 +5,8 @@ import asyncio
 import concurrent.futures
 import datetime
 import logging
-from typing import Any, Callable, List, Optional
+from collections.abc import Callable
+from typing import Any
 
 from bs4 import Tag
 
@@ -24,10 +25,9 @@ class AmazonOrders:
     for Order details and history.
     """
 
-    def __init__(self,
-                 amazon_session: AmazonSession,
-                 debug: Optional[bool] = None,
-                 config: Optional[AmazonOrdersConfig] = None) -> None:
+    def __init__(
+        self, amazon_session: AmazonSession, debug: bool | None = None, config: AmazonOrdersConfig | None = None
+    ) -> None:
         if not debug:
             debug = amazon_session.debug
         if not config:
@@ -43,9 +43,7 @@ class AmazonOrders:
         if self.debug:
             logger.setLevel(logging.DEBUG)
 
-    def get_order(self,
-                  order_id: str,
-                  clone: Optional[Order] = None) -> Order:
+    def get_order(self, order_id: str, clone: Order | None = None) -> Order:
         """
         Get the full details for a given Amazon Order ID.
 
@@ -59,15 +57,18 @@ class AmazonOrders:
         meta = {"index": clone.index} if clone else None
 
         order_details_response = self.amazon_session.get(
-            f"{self.config.constants.ORDER_DETAILS_URL}?orderID={order_id}")
+            f"{self.config.constants.ORDER_DETAILS_URL}?orderID={order_id}"
+        )
         self.amazon_session.check_response(order_details_response, meta=meta)
 
         if not order_details_response.response.url.startswith(self.config.constants.ORDER_DETAILS_URL):
-            raise AmazonOrdersNotFoundError(f"Amazon redirected, which likely means Order {order_id} was not found.",
-                                            meta=meta)
+            raise AmazonOrdersNotFoundError(
+                f"Amazon redirected, which likely means Order {order_id} was not found.", meta=meta
+            )
 
-        order_details_tag = util.select_one(order_details_response.parsed,
-                                            self.config.selectors.ORDER_DETAILS_ENTITY_SELECTOR)
+        order_details_tag = util.select_one(
+            order_details_response.parsed, self.config.selectors.ORDER_DETAILS_ENTITY_SELECTOR
+        )
 
         if not order_details_tag:
             raise AmazonOrdersError(f"Could not parse details for Order {order_id}. Check if Amazon changed the HTML.")
@@ -76,12 +77,14 @@ class AmazonOrders:
 
         return order
 
-    def get_order_history(self,
-                          year: int = datetime.date.today().year,
-                          start_index: Optional[int] = None,
-                          full_details: bool = False,
-                          keep_paging: bool = True,
-                          time_filter: Optional[str] = None) -> List[Order]:
+    def get_order_history(
+        self,
+        year: int = datetime.date.today().year,
+        start_index: int | None = None,
+        full_details: bool = False,
+        keep_paging: bool = True,
+        time_filter: str | None = None,
+    ) -> list[Order]:
         """
         Get the Amazon Order history for a given year.
 
@@ -100,40 +103,33 @@ class AmazonOrders:
             raise AmazonOrdersError("Call AmazonSession.login() to authenticate first.")
 
         optional_start_index = f"&startIndex={start_index}" if start_index else ""
-        
+
         # Use time_filter if provided, otherwise default to year-based filtering
         filter_value = time_filter if time_filter else f"year-{year}"
-        
-        next_page: Optional[str] = (
-            "{url}?{query_param}={filter_value}{optional_start_index}"
-        ).format(
-            url=self.config.constants.ORDER_HISTORY_URL,
-            query_param=self.config.constants.HISTORY_FILTER_QUERY_PARAM,
-            filter_value=filter_value,
-            optional_start_index=optional_start_index
+
+        next_page: str | None = (
+            f"{self.config.constants.ORDER_HISTORY_URL}?{self.config.constants.HISTORY_FILTER_QUERY_PARAM}={filter_value}{optional_start_index}"
         )
 
         current_index = int(start_index) if start_index else 0
 
         return asyncio.run(self._build_orders_async(next_page, keep_paging, full_details, current_index))
 
-    async def _build_orders_async(self,
-                                  next_page: Optional[str],
-                                  keep_paging: bool,
-                                  full_details: bool,
-                                  current_index: int) -> List[Order]:
+    async def _build_orders_async(
+        self, next_page: str | None, keep_paging: bool, full_details: bool, current_index: int
+    ) -> list[Order]:
         order_tasks = []
 
         while next_page:
             page_response = self.amazon_session.get(next_page)
             self.amazon_session.check_response(page_response, meta={"index": current_index})
 
-            order_tags = util.select(page_response.parsed,
-                                     self.config.selectors.ORDER_HISTORY_ENTITY_SELECTOR)
+            order_tags = util.select(page_response.parsed, self.config.selectors.ORDER_HISTORY_ENTITY_SELECTOR)
 
             if not order_tags:
-                order_count_tag = util.select_one(page_response.parsed,
-                                                  self.config.selectors.ORDER_HISTORY_COUNT_SELECTOR)
+                order_count_tag = util.select_one(
+                    page_response.parsed, self.config.selectors.ORDER_HISTORY_COUNT_SELECTOR
+                )
                 if order_count_tag and order_count_tag.text.startswith("0 "):
                     break
                 else:
@@ -146,8 +142,7 @@ class AmazonOrders:
 
             next_page = None
             if keep_paging:
-                next_page_tag = util.select_one(page_response.parsed,
-                                                self.config.selectors.NEXT_PAGE_LINK_SELECTOR)
+                next_page_tag = util.select_one(page_response.parsed, self.config.selectors.NEXT_PAGE_LINK_SELECTOR)
                 if next_page_tag:
                     next_page = str(next_page_tag["href"])
                     if not next_page.startswith("http"):
@@ -159,24 +154,20 @@ class AmazonOrders:
 
         return await asyncio.gather(*order_tasks)
 
-    def _build_order(self,
-                     order_tag: List[Tag],
-                     full_details: bool,
-                     current_index: int) -> Order:
+    def _build_order(self, order_tag: list[Tag], full_details: bool, current_index: int) -> Order:
         order: Order = self.config.order_cls(order_tag, self.config, index=current_index)
 
         if full_details:
             if len(util.select(order.parsed, self.config.selectors.ORDER_SKIP_ITEMS)) > 0:
-                logger.warning(f"Order {order.order_number} was partially populated, "
-                               f"since it is an unsupported Order type.")
+                logger.warning(
+                    f"Order {order.order_number} was partially populated, since it is an unsupported Order type."
+                )
             else:
                 order = self.get_order(order.order_number, clone=order)
 
         return order
 
-    async def _async_wrapper(self,
-                             func: Callable,
-                             *args: Any) -> Order:
+    async def _async_wrapper(self, func: Callable, *args: Any) -> Order:
         loop = asyncio.get_running_loop()
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.config.thread_pool_size) as pool:
             result = await loop.run_in_executor(pool, func, *args)

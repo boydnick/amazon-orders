@@ -23,16 +23,8 @@ class Constants:
     # Region configuration
     REGION = os.environ.get("AMAZON_REGION", "US").upper()
     REGION_CONFIGS = {
-        "US": {
-            "base_url": "https://www.amazon.com",
-            "assoc_handle": "usflex",
-            "language": "en-US,en;q=0.9"
-        },
-        "CA": {
-            "base_url": "https://www.amazon.ca",
-            "assoc_handle": "caflex",
-            "language": "en-CA,en;q=0.9"
-        }
+        "US": {"base_url": "https://www.amazon.com", "assoc_handle": "usflex", "language": "en-US,en;q=0.9"},
+        "CA": {"base_url": "https://www.amazon.ca", "assoc_handle": "caflex", "language": "en-CA,en;q=0.9"},
     }
 
     BASE_URL = os.environ.get("AMAZON_BASE_URL")
@@ -44,13 +36,15 @@ class Constants:
     ##########################################################################
 
     SIGN_IN_URL = f"{BASE_URL}/ap/signin"
-    SIGN_IN_QUERY_PARAMS = {"openid.pape.max_auth_age": "0",
-                            "openid.return_to": f"{BASE_URL}/?ref_=nav_custrec_signin",
-                            "openid.identity": "http://specs.openid.net/auth/2.0/identifier_select",
-                            "openid.assoc_handle": REGION_CONFIGS[REGION]["assoc_handle"],
-                            "openid.mode": "checkid_setup",
-                            "openid.claimed_id": "http://specs.openid.net/auth/2.0/identifier_select",
-                            "openid.ns": "http://specs.openid.net/auth/2.0"}
+    SIGN_IN_QUERY_PARAMS = {
+        "openid.pape.max_auth_age": "0",
+        "openid.return_to": f"{BASE_URL}/?ref_=nav_custrec_signin",
+        "openid.identity": "http://specs.openid.net/auth/2.0/identifier_select",
+        "openid.assoc_handle": REGION_CONFIGS[REGION]["assoc_handle"],
+        "openid.mode": "checkid_setup",
+        "openid.claimed_id": "http://specs.openid.net/auth/2.0/identifier_select",
+        "openid.ns": "http://specs.openid.net/auth/2.0",
+    }
     SIGN_OUT_URL = f"{BASE_URL}/gp/flex/sign-out.html"
 
     ##########################################################################
@@ -74,7 +68,7 @@ class Constants:
 
     BASE_HEADERS = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,"
-                  "application/signed-exchange;v=b3;q=0.7",
+        "application/signed-exchange;v=b3;q=0.7",
         "Accept-Encoding": "gzip, deflate, br, zstd",
         "Accept-Language": REGION_CONFIGS[REGION]["language"],
         "Cache-Control": "max-age=0",
@@ -86,7 +80,7 @@ class Constants:
         "Referer": f"{SIGN_IN_URL}?{urlencode(SIGN_IN_QUERY_PARAMS)}",
         "Rtt": "50",
         "Sec-Ch-Dpr": "2",
-        "Sec-Ch-Ua": "\"Google Chrome\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\"",
+        "Sec-Ch-Ua": '"Google Chrome";v="135", "Not-A.Brand";v="8", "Chromium";v="135"',
         "Sec-Ch-Ua-Mobile": "?0",
         "Sec-Ch-Ua-Platform": "macOS",
         "Sec-Ch-Ua-Platform-Version": "15.3.2",
@@ -97,8 +91,8 @@ class Constants:
         "Sec-Fetch-User": "?1",
         "Upgrade-Insecure-Requests": "1",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) "
-                      "Chrome/135.0.0.0 Safari/537.36",
-        "Viewport-Width": "1181"
+        "Chrome/135.0.0.0 Safari/537.36",
+        "Viewport-Width": "1181",
     }
 
     ##########################################################################
@@ -114,10 +108,8 @@ class Constants:
 
     CURRENCY_SYMBOL = os.environ.get("AMAZON_CURRENCY_SYMBOL", "$")
 
-    def format_currency(self,
-                        amount: float) -> str:
-        formatted_amt = "{currency_symbol}{amount:,.2f}".format(currency_symbol=self.CURRENCY_SYMBOL,
-                                                                amount=abs(amount))
+    def format_currency(self, amount: float) -> str:
+        formatted_amt = f"{self.CURRENCY_SYMBOL}{abs(amount):,.2f}"
         if round(amount, 2) < 0:
             return f"-{formatted_amt}"
         return formatted_amt

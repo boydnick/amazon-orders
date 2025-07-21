@@ -4,13 +4,13 @@ __license__ = "MIT"
 import re
 from abc import ABC
 from io import BytesIO
-from typing import Any, Dict, Optional, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
 import pyotp
-from PIL import Image
 from amazoncaptcha import AmazonCaptcha
 from bs4 import Tag
+from PIL import Image
 from requests import Response
 
 from amazonorders import util
@@ -31,29 +31,29 @@ class AuthForm(ABC):
     image URL to :func:`~amazonorders.session.IODefault.prompt` as ``img_url``.
     """
 
-    def __init__(self,
-                 config: AmazonOrdersConfig,
-                 selector: Optional[str],
-                 error_selector: Optional[str] = None,
-                 critical: bool = False) -> None:
+    def __init__(
+        self,
+        config: AmazonOrdersConfig,
+        selector: str | None,
+        error_selector: str | None = None,
+        critical: bool = False,
+    ) -> None:
         #: The config to use.
         self.config: AmazonOrdersConfig = config
         #: The CSS selector for the ``<form>``.
-        self.selector: Optional[str] = selector
+        self.selector: str | None = selector
         #: The CSS selector for the error div when form submission fails.
         self.error_selector: str = error_selector or config.selectors.DEFAULT_ERROR_TAG_SELECTOR
         #: If ``True``, form submission failures will raise :class:`~amazonorders.exception.AmazonOrdersAuthError`.
         self.critical: bool = critical
         #: The :class:`~amazonorders.session.AmazonSession` on which to submit the form.
-        self.amazon_session: Optional["AmazonSession"] = None
+        self.amazon_session: AmazonSession | None = None
         #: The selected ``<form>``.
-        self.form: Optional[Tag] = None
+        self.form: Tag | None = None
         #: The ``<form>`` data that will be submitted.
-        self.data: Optional[Dict[str, Any]] = None
+        self.data: dict[str, Any] | None = None
 
-    def select_form(self,
-                    amazon_session: "AmazonSession",
-                    parsed: Tag) -> bool:
+    def select_form(self, amazon_session: "AmazonSession", parsed: Tag) -> bool:
         """
         Using the ``selector`` defined on this instance, select the ``<form>`` for the given :class:`~bs4.Tag`.
 
@@ -69,17 +69,14 @@ class AuthForm(ABC):
 
         return self.form is not None
 
-    def fill_form(self,
-                  additional_attrs: Optional[Dict[str, Any]] = None) -> None:
+    def fill_form(self, additional_attrs: dict[str, Any] | None = None) -> None:
         """
         Populate the ``data`` field with values from the ``<form>``, including any additional attributes passed.
 
         :param additional_attrs: Additional attributes to add to the ``<form>`` data for submission.
         """
         if not self.form:
-            raise AmazonOrdersError(
-                "Call AuthForm.select_form() first."
-            )  # pragma: no cover
+            raise AmazonOrdersError("Call AuthForm.select_form() first.")  # pragma: no cover
 
         self.data = {}
         for field in self.form.select("input"):
@@ -98,17 +95,12 @@ class AuthForm(ABC):
         :return: The response from the executed request.
         """
         if not self.amazon_session or not self.form or not self.data:
-            raise AmazonOrdersError(
-                "Call AuthForm.select_form() first."
-            )  # pragma: no cover
+            raise AmazonOrdersError("Call AuthForm.select_form() first.")  # pragma: no cover
 
         method = str(self.form.get("method", "GET")).upper()
         url = self._get_form_action(last_response)
         request_data = {"params" if method == "GET" else "data": self.data}
-        form_response = self.amazon_session.request(method,
-                                                    url,
-                                                    persist_cookies=True,
-                                                    **request_data)
+        form_response = self.amazon_session.request(method, url, persist_cookies=True, **request_data)
 
         self._handle_errors(form_response)
 
@@ -124,12 +116,9 @@ class AuthForm(ABC):
         self.form = None
         self.data = None
 
-    def _solve_captcha(self,
-                       url: str) -> Union[str, Any]:
+    def _solve_captcha(self, url: str) -> str | Any:
         if not self.amazon_session:
-            raise AmazonOrdersError(
-                "Call AuthForm.select_form() first."
-            )  # pragma: no cover
+            raise AmazonOrdersError("Call AuthForm.select_form() first.")  # pragma: no cover
 
         captcha_response = AmazonCaptcha.fromlink(url).solve()
         if not captcha_response or captcha_response.lower() == "not solved":
@@ -139,17 +128,14 @@ class AuthForm(ABC):
 
             self.amazon_session.io.echo("Info: The Captcha couldn't be auto-solved.")
 
-            captcha_response = self.amazon_session.io.prompt("Enter the characters shown in the image",
-                                                             img_url=url)
+            captcha_response = self.amazon_session.io.prompt("Enter the characters shown in the image", img_url=url)
             self.amazon_session.io.echo("")
 
         return captcha_response
 
     def _get_form_action(self, last_response: Response) -> str:
         if not self.amazon_session or not self.form:
-            raise AmazonOrdersError(
-                "Call AuthForm.select_form() first."
-            )  # pragma: no cover
+            raise AmazonOrdersError("Call AuthForm.select_form() first.")  # pragma: no cover
 
         action = self.form.get("action")
         if not action:
@@ -161,16 +147,13 @@ class AuthForm(ABC):
                 parsed_url = urlparse(last_response.url)
                 return f"{parsed_url.scheme}://{parsed_url.netloc}{action}"
             else:
-                return "{url}/{path}".format(url="/".join(last_response.url.split("/")[:-1]),
-                                             path=action)
+                return "{url}/{path}".format(url="/".join(last_response.url.split("/")[:-1]), path=action)
         else:
             return action
 
     def _handle_errors(self, form_response: AmazonSessionResponse) -> None:
         if not self.amazon_session:
-            raise AmazonOrdersError(
-                "Call AuthForm.select_form() first."
-            )  # pragma: no cover
+            raise AmazonOrdersError("Call AuthForm.select_form() first.")  # pragma: no cover
 
         error_tag = util.select_one(form_response.parsed, self.error_selector)
         if error_tag:
@@ -183,10 +166,9 @@ class AuthForm(ABC):
 
 
 class SignInForm(AuthForm):
-    def __init__(self,
-                 config: AmazonOrdersConfig,
-                 selector: Optional[str] = None,
-                 solution_attr_key: str = "email") -> None:
+    def __init__(
+        self, config: AmazonOrdersConfig, selector: str | None = None, solution_attr_key: str = "email"
+    ) -> None:
         if not selector:
             selector = config.selectors.SIGN_IN_FORM_SELECTOR
 
@@ -194,25 +176,25 @@ class SignInForm(AuthForm):
 
         self.solution_attr_key = solution_attr_key
 
-    def fill_form(self,
-                  additional_attrs: Optional[Dict[str, Any]] = None) -> None:
+    def fill_form(self, additional_attrs: dict[str, Any] | None = None) -> None:
         if not self.amazon_session:
-            raise AmazonOrdersError(
-                "Call AuthForm.select_form() first."
-            )  # pragma: no cover
+            raise AmazonOrdersError("Call AuthForm.select_form() first.")  # pragma: no cover
 
         if not additional_attrs:
             additional_attrs = {}
         super().fill_form()
         if not self.data:
             raise AmazonOrdersError(
-                "SignInForm data did not populate, but it's required. "
-                "Check if Amazon changed their login flow."
+                "SignInForm data did not populate, but it's required. Check if Amazon changed their login flow."
             )  # pragma: no cover
 
-        additional_attrs.update({self.solution_attr_key: self.amazon_session.username,
-                                 "password": self.amazon_session.password,
-                                 "rememberMe": "true"})
+        additional_attrs.update(
+            {
+                self.solution_attr_key: self.amazon_session.username,
+                "password": self.amazon_session.password,
+                "rememberMe": "true",
+            }
+        )
         self.data.update(additional_attrs)
 
 
@@ -224,10 +206,9 @@ class MfaDeviceSelectForm(AuthForm):
     each of ``input`` tag.
     """
 
-    def __init__(self,
-                 config: AmazonOrdersConfig,
-                 selector: Optional[str] = None,
-                 solution_attr_key: str = "otpDeviceContext") -> None:
+    def __init__(
+        self, config: AmazonOrdersConfig, selector: str | None = None, solution_attr_key: str = "otpDeviceContext"
+    ) -> None:
         if not selector:
             selector = config.selectors.MFA_DEVICE_SELECT_FORM_SELECTOR
 
@@ -235,20 +216,16 @@ class MfaDeviceSelectForm(AuthForm):
 
         self.solution_attr_key = solution_attr_key
 
-    def fill_form(self,
-                  additional_attrs: Optional[Dict[str, Any]] = None) -> None:
+    def fill_form(self, additional_attrs: dict[str, Any] | None = None) -> None:
         if not self.amazon_session or not self.form:
-            raise AmazonOrdersError(
-                "Call AuthForm.select_form() first."
-            )  # pragma: no cover
+            raise AmazonOrdersError("Call AuthForm.select_form() first.")  # pragma: no cover
 
         if not additional_attrs:
             additional_attrs = {}
         super().fill_form()
         if not self.data:
             raise AmazonOrdersError(
-                "MfaDeviceSelectForm data did not populate, but it's required. "
-                "Check if Amazon changed their MFA flow."
+                "MfaDeviceSelectForm data did not populate, but it's required. Check if Amazon changed their MFA flow."
             )  # pragma: no cover
 
         contexts = util.select(self.form, self.config.selectors.MFA_DEVICE_SELECT_INPUT_SELECTOR)
@@ -259,9 +236,9 @@ class MfaDeviceSelectForm(AuthForm):
             i += 1
 
         otp_device = int(
-            self.amazon_session.io.prompt("Choose where you would like your one-time passcode sent",
-                                          type=int,
-                                          choices=choices)
+            self.amazon_session.io.prompt(
+                "Choose where you would like your one-time passcode sent", type=int, choices=choices
+            )
         )
         self.amazon_session.io.echo("")
 
@@ -270,10 +247,9 @@ class MfaDeviceSelectForm(AuthForm):
 
 
 class MfaForm(AuthForm):
-    def __init__(self,
-                 config: AmazonOrdersConfig,
-                 selector: Optional[str] = None,
-                 solution_attr_key: str = "otpCode") -> None:
+    def __init__(
+        self, config: AmazonOrdersConfig, selector: str | None = None, solution_attr_key: str = "otpCode"
+    ) -> None:
         if not selector:
             selector = config.selectors.MFA_FORM_SELECTOR
 
@@ -281,20 +257,16 @@ class MfaForm(AuthForm):
 
         self.solution_attr_key = solution_attr_key
 
-    def fill_form(self,
-                  additional_attrs: Optional[Dict[str, Any]] = None) -> None:
+    def fill_form(self, additional_attrs: dict[str, Any] | None = None) -> None:
         if not self.amazon_session:
-            raise AmazonOrdersError(
-                "Call AuthForm.select_form() first."
-            )  # pragma: no cover
+            raise AmazonOrdersError("Call AuthForm.select_form() first.")  # pragma: no cover
 
         if not additional_attrs:
             additional_attrs = {}
         super().fill_form()
         if not self.data:
             raise AmazonOrdersError(
-                "MfaForm data did not populate, but it's required. "
-                "Check if Amazon changed their MFA flow."
+                "MfaForm data did not populate, but it's required. Check if Amazon changed their MFA flow."
             )  # pragma: no cover
 
         if self.amazon_session.otp_secret_key:
@@ -303,8 +275,7 @@ class MfaForm(AuthForm):
             otp = self.amazon_session.io.prompt("Enter the one-time passcode from your preferred 2FA method")
             self.amazon_session.io.echo("")
 
-        additional_attrs.update({self.solution_attr_key: otp,
-                                 "rememberDevice": ""})
+        additional_attrs.update({self.solution_attr_key: otp, "rememberDevice": ""})
         self.data.update(additional_attrs)
 
         if "deviceId" not in self.data:
@@ -312,11 +283,13 @@ class MfaForm(AuthForm):
 
 
 class CaptchaForm(AuthForm):
-    def __init__(self,
-                 config: AmazonOrdersConfig,
-                 selector: Optional[str] = None,
-                 error_selector: Optional[str] = None,
-                 solution_attr_key: str = "cvf_captcha_input") -> None:
+    def __init__(
+        self,
+        config: AmazonOrdersConfig,
+        selector: str | None = None,
+        error_selector: str | None = None,
+        solution_attr_key: str = "cvf_captcha_input",
+    ) -> None:
         if not selector:
             selector = config.selectors.CAPTCHA_1_FORM_SELECTOR
         elif not error_selector:
@@ -326,35 +299,29 @@ class CaptchaForm(AuthForm):
 
         self.solution_attr_key = solution_attr_key
 
-    def fill_form(self,
-                  additional_attrs: Optional[Dict[str, Any]] = None) -> None:
+    def fill_form(self, additional_attrs: dict[str, Any] | None = None) -> None:
         if not self.form:
-            raise AmazonOrdersError(
-                "Call AuthForm.select_form() first."
-            )  # pragma: no cover
+            raise AmazonOrdersError("Call AuthForm.select_form() first.")  # pragma: no cover
 
         if not additional_attrs:
             additional_attrs = {}
         super().fill_form(additional_attrs)
         if not self.data:
             raise AmazonOrdersError(
-                "CaptchaForm data did not populate, but it's required. "
-                "Check if Amazon changed their Captcha flow."
+                "CaptchaForm data did not populate, but it's required. Check if Amazon changed their Captcha flow."
             )  # pragma: no cover
 
         # TODO: eliminate the use of find_parent() here
         form_parent = self.form.find_parent()
         if not form_parent:
             raise AmazonOrdersError(
-                "CaptchaForm parent not found, but it's required. "
-                "Check if Amazon changed their Captcha flow."
+                "CaptchaForm parent not found, but it's required. Check if Amazon changed their Captcha flow."
             )  # pragma: no cover
 
         img_tag = form_parent.select_one("img")
         if not img_tag:
             raise AmazonOrdersError(
-                "CaptchaForm <img> tag not found, but it's required. "
-                "Check if Amazon changed their Captcha flow."
+                "CaptchaForm <img> tag not found, but it's required. Check if Amazon changed their Captcha flow."
             )  # pragma: no cover
 
         img_url = str(img_tag["src"])
@@ -368,23 +335,21 @@ class CaptchaForm(AuthForm):
 
 
 class JSAuthBlocker(AuthForm):
-    def __init__(self,
-                 config: AmazonOrdersConfig,
-                 regex: str) -> None:
+    def __init__(self, config: AmazonOrdersConfig, regex: str) -> None:
         self.regex = regex
 
         super().__init__(config, None)
 
-    def select_form(self,
-                    amazon_session: "AmazonSession",
-                    parsed: Tag) -> bool:
+    def select_form(self, amazon_session: "AmazonSession", parsed: Tag) -> bool:
         if not self.regex:
             raise AmazonOrdersError("Must set a regex first.")  # pragma: no cover
 
         if re.search(self.regex, parsed.text):
-            raise AmazonOrdersAuthError("A JavaScript-based authentication challenge page has been found. This "
-                                        "library cannot solve these challenges. See "
-                                        "https://amazon-orders.readthedocs.io/troubleshooting.html"
-                                        "#captcha-keep-blocking-automated-login for more details.")
+            raise AmazonOrdersAuthError(
+                "A JavaScript-based authentication challenge page has been found. This "
+                "library cannot solve these challenges. See "
+                "https://amazon-orders.readthedocs.io/troubleshooting.html"
+                "#captcha-keep-blocking-automated-login for more details."
+            )
 
         return False

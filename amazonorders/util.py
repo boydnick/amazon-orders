@@ -4,9 +4,10 @@ __license__ = "MIT"
 import importlib
 import logging
 import re
-from typing import List, Union, Optional, Callable, Any
+from collections.abc import Callable
+from typing import Any
 
-from bs4 import Tag, BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from requests import Response
 
 from amazonorders.selectors import Selector
@@ -26,7 +27,7 @@ class AmazonSessionResponse:
         self.parsed: Tag = BeautifulSoup(self.response.text, bs4_parser)
 
 
-def select(parsed: Tag, selector: Union[List[Union[str, Selector]], Union[str, Selector]]) -> List[Tag]:
+def select(parsed: Tag, selector: list[str | Selector] | str | Selector) -> list[Tag]:
     """
     This is a helper function that extends BeautifulSoup's `select() <https://www.crummy.com/software/
     BeautifulSoup/bs4/doc/#css-selectors-through-the-css-property>`_ method to allow for multiple selectors.
@@ -58,8 +59,7 @@ def select(parsed: Tag, selector: Union[List[Union[str, Selector]], Union[str, S
     return []
 
 
-def select_one(parsed: Tag,
-               selector: Union[List[Union[str, Selector]], Union[str, Selector]]) -> Optional[Tag]:
+def select_one(parsed: Tag, selector: list[str | Selector] | str | Selector) -> Tag | None:
     """
     This is a helper function that extends BeautifulSoup's `select_one() <https://www.crummy.com/software/
     BeautifulSoup/bs4/doc/#css-selectors-through-the-css-property>`_ method to allow for multiple selectors.
@@ -74,7 +74,7 @@ def select_one(parsed: Tag,
         selector = [selector]
 
     for s in selector:
-        tag: Optional[Tag] = None
+        tag: Tag | None = None
 
         if isinstance(s, Selector):
             t = parsed.select_one(s.css_selector)
@@ -91,7 +91,7 @@ def select_one(parsed: Tag,
     return None
 
 
-def to_type(value: str) -> Union[int, float, bool, str, None]:
+def to_type(value: str) -> int | float | bool | str | None:
     """
     Attempt to convert ``value`` to its primitive type of ``int``, ``float``, or ``bool``.
 
@@ -103,7 +103,7 @@ def to_type(value: str) -> Union[int, float, bool, str, None]:
     if not value or value == "":
         return None
 
-    rv: Union[int, float, bool, str] = value
+    rv: int | float | bool | str = value
 
     try:
         rv = int(rv)
@@ -122,7 +122,7 @@ def to_type(value: str) -> Union[int, float, bool, str, None]:
     return rv
 
 
-def load_class(package: List[str], clazz: str) -> Union[Callable, Any]:
+def load_class(package: list[str], clazz: str) -> Callable | Any:
     """
     Import the given class from the given package, and return it.
 

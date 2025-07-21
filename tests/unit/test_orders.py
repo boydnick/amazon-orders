@@ -6,25 +6,24 @@ import unittest
 from datetime import date
 
 import responses
-
-from amazonorders.exception import AmazonOrdersError, AmazonOrdersNotFoundError, AmazonOrdersAuthRedirectError
+from amazonorders.exception import AmazonOrdersAuthRedirectError, AmazonOrdersError, AmazonOrdersNotFoundError
 from amazonorders.orders import AmazonOrders
 from amazonorders.session import AmazonSession
 from tests.unittestcase import UnitTestCase
 
 
 class TestOrders(UnitTestCase):
-    temp_order_history_file_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "output",
-                                                "temp-order-history.html")
-    temp_order_details_file_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "output",
-                                                "temp-order-details.html")
+    temp_order_history_file_path = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), "output", "temp-order-history.html"
+    )
+    temp_order_details_file_path = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), "output", "temp-order-details.html"
+    )
 
     def setUp(self):
         super().setUp()
 
-        self.amazon_session = AmazonSession("some-username",
-                                            "some-password",
-                                            config=self.test_config)
+        self.amazon_session = AmazonSession("some-username", "some-password", config=self.test_config)
 
         self.amazon_orders = AmazonOrders(self.amazon_session)
 
@@ -103,8 +102,7 @@ class TestOrders(UnitTestCase):
 
         # WHEN
         with self.assertRaises(AmazonOrdersError) as cm:
-            self.amazon_orders.get_order_history(year=year,
-                                                 start_index=start_index)
+            self.amazon_orders.get_order_history(year=year, start_index=start_index)
 
         # THEN
         self.assertEqual(1, resp.call_count)
@@ -116,8 +114,7 @@ class TestOrders(UnitTestCase):
         self.amazon_session.is_authenticated = True
         year = 2020
         start_index = 40
-        with open(os.path.join(self.RESOURCES_DIR, "500.html"), "r",
-                  encoding="utf-8") as f:
+        with open(os.path.join(self.RESOURCES_DIR, "500.html"), encoding="utf-8") as f:
             resp = responses.add(
                 responses.GET,
                 f"{self.test_config.constants.ORDER_HISTORY_URL}?timeFilter=year-{year}&startIndex={start_index}",
@@ -127,8 +124,7 @@ class TestOrders(UnitTestCase):
 
         # WHEN
         with self.assertRaises(AmazonOrdersError) as cm:
-            self.amazon_orders.get_order_history(year=year,
-                                                 start_index=start_index)
+            self.amazon_orders.get_order_history(year=year, start_index=start_index)
 
         # THEN
         self.assertEqual(1, resp.call_count)
@@ -161,8 +157,7 @@ class TestOrders(UnitTestCase):
         # GIVEN
         self.amazon_session.is_authenticated = True
         year = 2024
-        with open(os.path.join(self.RESOURCES_DIR, "orders", "order-history-egift.html"), "r",
-                  encoding="utf-8") as f:
+        with open(os.path.join(self.RESOURCES_DIR, "orders", "order-history-egift.html"), encoding="utf-8") as f:
             resp = responses.add(
                 responses.GET,
                 self.test_config.constants.ORDER_HISTORY_URL,
@@ -182,8 +177,7 @@ class TestOrders(UnitTestCase):
         self.assertIsNotNone(order.order_details_link)
         self.assertEqual(date(2024, 10, 28), order.order_placed_date)
         self.assertEqual(1, len(order.items))
-        self.assertEqual("Amazon eGift Card - Birthday Candles (Animated)",
-                         order.items[0].title)
+        self.assertEqual("Amazon eGift Card - Birthday Candles (Animated)", order.items[0].title)
         self.assertIsNotNone(order.items[0].link)
         self.assertIsNotNone(order.items[0].image_link)
 
@@ -192,8 +186,7 @@ class TestOrders(UnitTestCase):
         # GIVEN
         self.amazon_session.is_authenticated = True
         year = 2024
-        with open(os.path.join(self.RESOURCES_DIR, "orders", "order-history-amazon-store.html"), "r",
-                  encoding="utf-8") as f:
+        with open(os.path.join(self.RESOURCES_DIR, "orders", "order-history-amazon-store.html"), encoding="utf-8") as f:
             resp = responses.add(
                 responses.GET,
                 self.test_config.constants.ORDER_HISTORY_URL,
@@ -220,8 +213,7 @@ class TestOrders(UnitTestCase):
         self.amazon_session.is_authenticated = True
         year = 2010
         resp1 = self.given_order_history_exists(year, start_index=0)
-        with open(os.path.join(self.RESOURCES_DIR, "orders", f"order-history-{year}-10.html"), "r",
-                  encoding="utf-8") as f:
+        with open(os.path.join(self.RESOURCES_DIR, "orders", f"order-history-{year}-10.html"), encoding="utf-8") as f:
             resp2 = responses.add(
                 responses.GET,
                 f"{self.test_config.constants.ORDER_HISTORY_URL}?timeFilter=year-{year}"
@@ -243,8 +235,7 @@ class TestOrders(UnitTestCase):
         # GIVEN
         self.amazon_session.is_authenticated = True
         year = 2024
-        with open(os.path.join(self.RESOURCES_DIR, "orders", "order-history-fresh.html"), "r",
-                  encoding="utf-8") as f:
+        with open(os.path.join(self.RESOURCES_DIR, "orders", "order-history-fresh.html"), encoding="utf-8") as f:
             resp = responses.add(
                 responses.GET,
                 self.test_config.constants.ORDER_HISTORY_URL,
@@ -271,8 +262,7 @@ class TestOrders(UnitTestCase):
         # GIVEN
         self.amazon_session.is_authenticated = True
         year = 2024
-        with open(os.path.join(self.RESOURCES_DIR, "orders", "order-history-wholefoods.html"), "r",
-                  encoding="utf-8") as f:
+        with open(os.path.join(self.RESOURCES_DIR, "orders", "order-history-wholefoods.html"), encoding="utf-8") as f:
             resp = responses.add(
                 responses.GET,
                 self.test_config.constants.ORDER_HISTORY_URL,
@@ -298,8 +288,9 @@ class TestOrders(UnitTestCase):
         # GIVEN
         self.amazon_session.is_authenticated = True
         year = 2024
-        with open(os.path.join(self.RESOURCES_DIR, "orders", "order-history-wholefoods-catering.html"), "r",
-                  encoding="utf-8") as f:
+        with open(
+            os.path.join(self.RESOURCES_DIR, "orders", "order-history-wholefoods-catering.html"), encoding="utf-8"
+        ) as f:
             resp1 = responses.add(
                 responses.GET,
                 self.test_config.constants.ORDER_HISTORY_URL,
@@ -326,10 +317,9 @@ class TestOrders(UnitTestCase):
         resp2 = self.given_any_order_details_exists("order-details-114-9460922-7737063.html")
 
         # WHEN
-        orders = self.amazon_orders.get_order_history(year=year,
-                                                      start_index=start_index,
-                                                      keep_paging=False,
-                                                      full_details=True)
+        orders = self.amazon_orders.get_order_history(
+            year=year, start_index=start_index, keep_paging=False, full_details=True
+        )
 
         # THEN
         self.assertEqual(10, len(orders))
@@ -349,10 +339,9 @@ class TestOrders(UnitTestCase):
         resp2 = self.given_any_order_details_exists("order-details-113-1625648-3437067.html")
 
         # WHEN
-        orders = self.amazon_orders.get_order_history(year=year,
-                                                      start_index=start_index,
-                                                      keep_paging=False,
-                                                      full_details=True)
+        orders = self.amazon_orders.get_order_history(
+            year=year, start_index=start_index, keep_paging=False, full_details=True
+        )
 
         # THEN
         self.assertEqual(10, len(orders))
@@ -371,10 +360,9 @@ class TestOrders(UnitTestCase):
         resp2 = self.given_any_order_details_exists("order-details-112-2961628-4757846.html")
 
         # WHEN
-        orders = self.amazon_orders.get_order_history(year=year,
-                                                      start_index=start_index,
-                                                      keep_paging=False,
-                                                      full_details=True)
+        orders = self.amazon_orders.get_order_history(
+            year=year, start_index=start_index, keep_paging=False, full_details=True
+        )
 
         # THEN
         self.assertEqual(10, len(orders))
@@ -392,9 +380,7 @@ class TestOrders(UnitTestCase):
         resp = self.given_order_history_exists(year, start_index)
 
         # WHEN
-        orders = self.amazon_orders.get_order_history(year=year,
-                                                      start_index=start_index,
-                                                      keep_paging=False)
+        orders = self.amazon_orders.get_order_history(year=year, start_index=start_index, keep_paging=False)
 
         # THEN
         self.assertEqual(10, len(orders))
@@ -412,10 +398,9 @@ class TestOrders(UnitTestCase):
         resp2 = self.given_any_order_details_exists("order-details-112-9685975-5907428.html")
 
         # WHEN
-        orders = self.amazon_orders.get_order_history(year=year,
-                                                      start_index=start_index,
-                                                      keep_paging=False,
-                                                      full_details=True)
+        orders = self.amazon_orders.get_order_history(
+            year=year, start_index=start_index, keep_paging=False, full_details=True
+        )
 
         # THEN
         self.assertEqual(10, len(orders))
@@ -429,8 +414,7 @@ class TestOrders(UnitTestCase):
         # GIVEN
         self.amazon_session.is_authenticated = True
         order_id = "112-9685975-5907428"
-        with open(os.path.join(self.RESOURCES_DIR, "orders", f"order-details-{order_id}.html"), "r",
-                  encoding="utf-8") as f:
+        with open(os.path.join(self.RESOURCES_DIR, "orders", f"order-details-{order_id}.html"), encoding="utf-8") as f:
             resp = responses.add(
                 responses.GET,
                 f"{self.test_config.constants.ORDER_DETAILS_URL}?orderID={order_id}",
@@ -453,8 +437,7 @@ class TestOrders(UnitTestCase):
         order_id = "112-9685975-5907428"
         index = 42
         # The first time we fetch it will succeed
-        with open(os.path.join(self.RESOURCES_DIR, "orders", f"order-details-{order_id}.html"), "r",
-                  encoding="utf-8") as f:
+        with open(os.path.join(self.RESOURCES_DIR, "orders", f"order-details-{order_id}.html"), encoding="utf-8") as f:
             resp1 = responses.add(
                 responses.GET,
                 f"{self.test_config.constants.ORDER_DETAILS_URL}?orderID={order_id}",
@@ -462,19 +445,14 @@ class TestOrders(UnitTestCase):
                 status=200,
             )
         # The second time it will redirect, simulating a not found
-        with open(os.path.join(self.RESOURCES_DIR, "orders", f"order-details-{order_id}.html"), "r",
-                  encoding="utf-8") as f:
+        with open(os.path.join(self.RESOURCES_DIR, "orders", f"order-details-{order_id}.html"), encoding="utf-8") as f:
             resp2 = responses.add(
                 responses.GET,
                 f"{self.test_config.constants.ORDER_DETAILS_URL}?orderID={order_id}",
                 status=302,
-                headers={"Location": self.test_config.constants.ORDER_HISTORY_URL}
+                headers={"Location": self.test_config.constants.ORDER_HISTORY_URL},
             )
-        resp3 = responses.add(
-            responses.GET,
-            self.test_config.constants.ORDER_HISTORY_URL,
-            status=200
-        )
+        resp3 = responses.add(responses.GET, self.test_config.constants.ORDER_HISTORY_URL, status=200)
 
         # WHEN
         order = self.amazon_orders.get_order(order_id)
@@ -494,8 +472,7 @@ class TestOrders(UnitTestCase):
         # GIVEN
         self.amazon_session.is_authenticated = True
         order_id = "112-9685975-5907428"
-        with open(os.path.join(self.RESOURCES_DIR, "500.html"), "r",
-                  encoding="utf-8") as f:
+        with open(os.path.join(self.RESOURCES_DIR, "500.html"), encoding="utf-8") as f:
             resp = responses.add(
                 responses.GET,
                 f"{self.test_config.constants.ORDER_DETAILS_URL}?orderID={order_id}",
@@ -516,8 +493,7 @@ class TestOrders(UnitTestCase):
         # GIVEN
         self.amazon_session.is_authenticated = True
         order_id = "112-5939971-8962610"
-        with open(os.path.join(self.RESOURCES_DIR, "orders", f"order-details-{order_id}.html"), "r",
-                  encoding="utf-8") as f:
+        with open(os.path.join(self.RESOURCES_DIR, "orders", f"order-details-{order_id}.html"), encoding="utf-8") as f:
             resp1 = responses.add(
                 responses.GET,
                 f"{self.test_config.constants.ORDER_DETAILS_URL}?orderID={order_id}",
@@ -538,8 +514,7 @@ class TestOrders(UnitTestCase):
         # GIVEN
         self.amazon_session.is_authenticated = True
         order_id = "112-4482432-2955442"
-        with open(os.path.join(self.RESOURCES_DIR, "orders", f"order-details-{order_id}.html"), "r",
-                  encoding="utf-8") as f:
+        with open(os.path.join(self.RESOURCES_DIR, "orders", f"order-details-{order_id}.html"), encoding="utf-8") as f:
             resp1 = responses.add(
                 responses.GET,
                 f"{self.test_config.constants.ORDER_DETAILS_URL}?orderID={order_id}",
@@ -560,8 +535,7 @@ class TestOrders(UnitTestCase):
         # GIVEN
         self.amazon_session.is_authenticated = True
         order_id = "112-9087159-1657009"
-        with open(os.path.join(self.RESOURCES_DIR, "orders", f"order-details-{order_id}.html"), "r",
-                  encoding="utf-8") as f:
+        with open(os.path.join(self.RESOURCES_DIR, "orders", f"order-details-{order_id}.html"), encoding="utf-8") as f:
             resp1 = responses.add(
                 responses.GET,
                 f"{self.test_config.constants.ORDER_DETAILS_URL}?orderID={order_id}",
@@ -582,8 +556,7 @@ class TestOrders(UnitTestCase):
         # GIVEN
         self.amazon_session.is_authenticated = True
         order_id = "114-8722141-6545058"
-        with open(os.path.join(self.RESOURCES_DIR, "orders", f"order-details-{order_id}.html"), "r",
-                  encoding="utf-8") as f:
+        with open(os.path.join(self.RESOURCES_DIR, "orders", f"order-details-{order_id}.html"), encoding="utf-8") as f:
             resp1 = responses.add(
                 responses.GET,
                 f"{self.test_config.constants.ORDER_DETAILS_URL}?orderID={order_id}",
@@ -604,8 +577,7 @@ class TestOrders(UnitTestCase):
         # GIVEN
         self.amazon_session.is_authenticated = True
         order_id = "111-6778632-7354601"
-        with open(os.path.join(self.RESOURCES_DIR, "orders", f"order-details-{order_id}.html"), "r",
-                  encoding="utf-8") as f:
+        with open(os.path.join(self.RESOURCES_DIR, "orders", f"order-details-{order_id}.html"), encoding="utf-8") as f:
             resp1 = responses.add(
                 responses.GET,
                 f"{self.test_config.constants.ORDER_DETAILS_URL}?orderID={order_id}",
@@ -626,8 +598,9 @@ class TestOrders(UnitTestCase):
         # GIVEN
         self.amazon_session.is_authenticated = True
         year = 2023
-        with open(os.path.join(self.RESOURCES_DIR, "orders", "order-history-2023-zero-orders.html"), "r",
-                  encoding="utf-8") as f:
+        with open(
+            os.path.join(self.RESOURCES_DIR, "orders", "order-history-2023-zero-orders.html"), encoding="utf-8"
+        ) as f:
             resp = responses.add(
                 responses.GET,
                 self.test_config.constants.ORDER_HISTORY_URL,
@@ -642,9 +615,10 @@ class TestOrders(UnitTestCase):
         self.assertEqual(0, len(orders))
         self.assertEqual(1, resp.call_count)
 
-    @unittest.skipIf(not os.path.exists(temp_order_history_file_path),
-                     reason="Skipped, to debug an order history page, "
-                            "place it at tests/output/temp-order-history.html")
+    @unittest.skipIf(
+        not os.path.exists(temp_order_history_file_path),
+        reason="Skipped, to debug an order history page, place it at tests/output/temp-order-history.html",
+    )
     @responses.activate
     def test_temp_order_history_file(self):
         """
@@ -654,27 +628,26 @@ class TestOrders(UnitTestCase):
         # GIVEN
         self.amazon_session.is_authenticated = True
         year = 2024
-        with open(self.temp_order_history_file_path, "r", encoding="utf-8") as f:
+        with open(self.temp_order_history_file_path, encoding="utf-8") as f:
             responses.add(
                 responses.GET,
-                "{url}?timeFilter=year-{year}".format(url=self.test_config.constants.ORDER_HISTORY_URL,
-                                                      year=year),
+                f"{self.test_config.constants.ORDER_HISTORY_URL}?timeFilter=year-{year}",
                 body=f.read(),
                 status=200,
             )
 
         # WHEN
-        orders = self.amazon_orders.get_order_history(year=year,
-                                                      keep_paging=False)
+        orders = self.amazon_orders.get_order_history(year=year, keep_paging=False)
 
         # THEN, assert the primary fields are populated without regression
         for order in orders:
             self.assert_populated_generic(order, full_details=False)
             self.assertIsNotNone(order.index)
 
-    @unittest.skipIf(not os.path.exists(temp_order_details_file_path),
-                     reason="Skipped, to debug an order details page, "
-                            "place it at tests/output/temp-order-details.html")
+    @unittest.skipIf(
+        not os.path.exists(temp_order_details_file_path),
+        reason="Skipped, to debug an order details page, place it at tests/output/temp-order-details.html",
+    )
     @responses.activate
     def test_temp_order_details_file(self):
         """
@@ -684,7 +657,7 @@ class TestOrders(UnitTestCase):
         # GIVEN
         self.amazon_session.is_authenticated = True
         order_id = "temp-1234"
-        with open(self.temp_order_details_file_path, "r", encoding="utf-8") as f:
+        with open(self.temp_order_details_file_path, encoding="utf-8") as f:
             responses.add(
                 responses.GET,
                 f"{self.test_config.constants.ORDER_DETAILS_URL}?orderID={order_id}",

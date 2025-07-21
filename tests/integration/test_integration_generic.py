@@ -5,6 +5,7 @@ import datetime
 import os
 
 from amazonorders.exception import AmazonOrdersNotFoundError
+
 from tests.integrationtestcase import IntegrationTestCase
 
 
@@ -34,8 +35,7 @@ class TestIntegrationGeneric(IntegrationTestCase):
 
     def test_get_order_after_get_order_history_single_page(self):
         # WHEN
-        orders = self.amazon_orders.get_order_history(year=self.year,
-                                                      keep_paging=False)
+        orders = self.amazon_orders.get_order_history(year=self.year, keep_paging=False)
 
         # THEN
         self.assertGreaterEqual(len(orders), 1)
@@ -62,8 +62,7 @@ class TestIntegrationGeneric(IntegrationTestCase):
 
     def test_get_order_history(self):
         # WHEN
-        orders = self.amazon_orders.get_order_history(year=self.year,
-                                                      start_index=self.start_index)
+        orders = self.amazon_orders.get_order_history(year=self.year, start_index=self.start_index)
 
         # THEN
         self.assertGreaterEqual(len(orders), 1)
@@ -77,9 +76,9 @@ class TestIntegrationGeneric(IntegrationTestCase):
         # building Order history won't cause issues with rate limiting, etc.
         for i in range(self.full_details_loop_count):
             # WHEN
-            orders = self.amazon_orders.get_order_history(year=self.year,
-                                                          start_index=self.start_index,
-                                                          full_details=True)
+            orders = self.amazon_orders.get_order_history(
+                year=self.year, start_index=self.start_index, full_details=True
+            )
 
             # THEN
             self.assertGreaterEqual(len(orders), 1)

@@ -8,7 +8,7 @@ import logging
 import os
 import platform
 import time
-from typing import Any, Optional
+from typing import Any
 
 import click
 from click.core import Context
@@ -17,30 +17,23 @@ from amazonorders import __version__, util
 from amazonorders.conf import AmazonOrdersConfig
 from amazonorders.entity.order import Order
 from amazonorders.entity.transaction import Transaction
-from amazonorders.exception import AmazonOrdersError, AmazonOrdersAuthError, AmazonOrdersAuthRedirectError
+from amazonorders.exception import AmazonOrdersAuthError, AmazonOrdersAuthRedirectError, AmazonOrdersError
 from amazonorders.orders import AmazonOrders
 from amazonorders.session import AmazonSession, IODefault
 from amazonorders.transactions import AmazonTransactions
 
 logger = logging.getLogger("amazonorders")
 
-banner_path = os.path.join(os.path.abspath(os.path.dirname(__file__)),
-                           "banner.txt")
+banner_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "banner.txt")
 with open(banner_path) as f:
     banner = f.read()
 
 
 class IOClick(IODefault):
-    def echo(self,
-             msg: str,
-             fg: Optional[str] = None,
-             **kwargs: Any) -> None:
+    def echo(self, msg: str, fg: str | None = None, **kwargs: Any) -> None:
         click.secho(msg, fg=fg)
 
-    def prompt(self,
-               msg: str,
-               type: Optional[Any] = None,
-               **kwargs: Any) -> Any:
+    def prompt(self, msg: str, type: Any | None = None, **kwargs: Any) -> Any:
         for choice in kwargs.get("choices", []):
             self.echo(choice, **kwargs)
 
@@ -50,18 +43,17 @@ class IOClick(IODefault):
 @click.group()
 @click.option("--username", help="An Amazon username.")
 @click.option("--password", help="An Amazon password.")
-@click.option("--debug", is_flag=True, default=False,
-              help="Enable debugging and send output to "
-                   "command line.")
-@click.option("--config-path",
-              help="The config path.")
-@click.option("--max-auth-attempts",
-              help="The max auth loop attempts to make (successes and failures), passing this overrides config value.")
-@click.option("--output-dir",
-              help="The directory where any output files should be produced, passing this overrides config value.")
+@click.option("--debug", is_flag=True, default=False, help="Enable debugging and send output to command line.")
+@click.option("--config-path", help="The config path.")
+@click.option(
+    "--max-auth-attempts",
+    help="The max auth loop attempts to make (successes and failures), passing this overrides config value.",
+)
+@click.option(
+    "--output-dir", help="The directory where any output files should be produced, passing this overrides config value."
+)
 @click.pass_context
-def amazon_orders_cli(ctx: Context,
-                      **kwargs: Any) -> None:
+def amazon_orders_cli(ctx: Context, **kwargs: Any) -> None:
     """
     amazon-orders is an unofficial library that provides a CLI (and Python API) for Amazon order history.
 
@@ -90,34 +82,32 @@ def amazon_orders_cli(ctx: Context,
         data["output_dir"] = kwargs["output_dir"]
     if kwargs.get("max_auth_attempts"):
         data["max_auth_attempts"] = kwargs["max_auth_attempts"]
-    ctx.obj["conf"] = AmazonOrdersConfig(config_path=kwargs.get("config_path"),
-                                         data=data)
+    ctx.obj["conf"] = AmazonOrdersConfig(config_path=kwargs.get("config_path"), data=data)
 
     username = kwargs.get("username")
     password = kwargs.get("password")
 
-    amazon_session = AmazonSession(username,
-                                   password,
-                                   debug=kwargs["debug"],
-                                   io=IOClick(),
-                                   config=ctx.obj["conf"])
+    amazon_session = AmazonSession(username, password, debug=kwargs["debug"], io=IOClick(), config=ctx.obj["conf"])
 
     ctx.obj["amazon_session"] = amazon_session
 
 
 @amazon_orders_cli.command()
 @click.pass_context
-@click.option("--year", default=datetime.date.today().year,
-              help="The year for which to get Order history, defaults to the current year.")
-@click.option("--start-index",
-              help="The index of the Order from which to start fetching in the history.")
-@click.option("--single-page", is_flag=True, default=False,
-              help="Only one page should be fetched.")
-@click.option("--full-details", is_flag=True, default=False,
-              help="Get the full details for each Order in the history. "
-                   "This will execute an additional request per Order.")
-def history(ctx: Context,
-            **kwargs: Any) -> None:
+@click.option(
+    "--year",
+    default=datetime.date.today().year,
+    help="The year for which to get Order history, defaults to the current year.",
+)
+@click.option("--start-index", help="The index of the Order from which to start fetching in the history.")
+@click.option("--single-page", is_flag=True, default=False, help="Only one page should be fetched.")
+@click.option(
+    "--full-details",
+    is_flag=True,
+    default=False,
+    help="Get the full details for each Order in the history. This will execute an additional request per Order.",
+)
+def history(ctx: Context, **kwargs: Any) -> None:
     """
     Get the Amazon Order history for a given year.
     """
@@ -133,31 +123,27 @@ def history(ctx: Context,
 
         optional_start_index = f", startIndex={start_index}, one page" if single_page else ", all pages"
         optional_full_details = ", with full details" if full_details else ""
-        click.echo("""-----------------------------------------------------------------------
+        click.echo(f"""-----------------------------------------------------------------------
 Order History for {year}{optional_start_index}{optional_full_details}
------------------------------------------------------------------------\n"""
-                   .format(year=year,
-                           optional_start_index=optional_start_index,
-                           optional_full_details=optional_full_details))
+-----------------------------------------------------------------------\n""")
         click.echo("Info: Fetching Order history, this might take a minute ...")
 
         config = ctx.obj["conf"]
-        amazon_orders = AmazonOrders(amazon_session,
-                                     config=config)
+        amazon_orders = AmazonOrders(amazon_session, config=config)
 
         start_time = time.time()
         total = 0
-        for o in amazon_orders.get_order_history(year=kwargs["year"],
-                                                 start_index=kwargs["start_index"],
-                                                 full_details=kwargs["full_details"],
-                                                 keep_paging=not kwargs["single_page"]):
+        for o in amazon_orders.get_order_history(
+            year=kwargs["year"],
+            start_index=kwargs["start_index"],
+            full_details=kwargs["full_details"],
+            keep_paging=not kwargs["single_page"],
+        ):
             click.echo(f"{_order_output(o, config)}\n")
             total += 1
         end_time = time.time()
 
-        click.echo(
-            "... {total} Orders parsed in {time} seconds.\n".format(total=total,
-                                                                    time=int(end_time - start_time)))
+        click.echo(f"... {total} Orders parsed in {int(end_time - start_time)} seconds.\n")
     except AmazonOrdersAuthRedirectError:
         _prompt_to_reauth_flow()
     except AmazonOrdersError as e:
@@ -168,8 +154,7 @@ Order History for {year}{optional_start_index}{optional_full_details}
 @amazon_orders_cli.command()
 @click.pass_context
 @click.argument("order_id")
-def order(ctx: Context,
-          order_id: str) -> None:
+def order(ctx: Context, order_id: str) -> None:
     """
     Get the full details for a given Amazon Order ID.
     """
@@ -179,8 +164,7 @@ def order(ctx: Context,
         _authenticate(amazon_session)
 
         config = ctx.obj["conf"]
-        amazon_orders = AmazonOrders(amazon_session,
-                                     config=config)
+        amazon_orders = AmazonOrders(amazon_session, config=config)
 
         o = amazon_orders.get_order(order_id)
 
@@ -194,8 +178,7 @@ def order(ctx: Context,
 
 @amazon_orders_cli.command()
 @click.pass_context
-@click.option("--days", default=365,
-              help="The number of days of Transactions to get.")
+@click.option("--days", default=365, help="The number of days of Transactions to get.")
 def transactions(ctx: Context, **kwargs: Any):
     """
     Get Amazon Transaction history for a given number of days.
@@ -208,15 +191,14 @@ def transactions(ctx: Context, **kwargs: Any):
         days = kwargs["days"]
 
         click.echo(
-            """-----------------------------------------------------------------------
+            f"""-----------------------------------------------------------------------
 Transaction History for {days} days
------------------------------------------------------------------------\n""".format(days=days)
+-----------------------------------------------------------------------\n"""
         )
         click.echo("Info: Fetching Transaction history, this might take a minute ...")
 
         config = ctx.obj["conf"]
-        amazon_transactions = AmazonTransactions(amazon_session,
-                                                 config=config)
+        amazon_transactions = AmazonTransactions(amazon_session, config=config)
 
         start_time = time.time()
         total = 0
@@ -225,9 +207,7 @@ Transaction History for {days} days
             total += 1
         end_time = time.time()
 
-        click.echo(
-            "... {total} Transactions parsed in {time} seconds.\n".format(total=total,
-                                                                          time=int(end_time - start_time)))
+        click.echo(f"... {total} Transactions parsed in {int(end_time - start_time)} seconds.\n")
     except AmazonOrdersAuthRedirectError:
         _prompt_to_reauth_flow()
     except AmazonOrdersError as e:
@@ -257,8 +237,7 @@ def login(ctx: Context) -> None:
     amazon_session = ctx.obj["amazon_session"]
 
     if amazon_session.auth_cookies_stored():
-        click.echo(
-            "Info: A persisted session exists. Call the `logout` command first to change users.\n")
+        click.echo("Info: A persisted session exists. Call the `logout` command first to change users.\n")
     else:
         _authenticate(amazon_session)
 
@@ -281,9 +260,7 @@ def logout(ctx: Context) -> None:
 @click.pass_context
 @click.argument("key")
 @click.argument("value")
-def update_config(ctx: Context,
-                  key: str,
-                  value: str) -> None:
+def update_config(ctx: Context, key: str, value: str) -> None:
     """
     Persist the given config value to the config file.
     """
@@ -291,7 +268,7 @@ def update_config(ctx: Context,
 
     conf.update_config(key, util.to_type(value))
 
-    click.echo(f"Info: Config \"{key}\" updated to \"{value}\".\n")
+    click.echo(f'Info: Config "{key}" updated to "{value}".\n')
 
 
 @amazon_orders_cli.command()
@@ -308,14 +285,14 @@ def _print_banner() -> None:
     click.echo(banner.format(version=__version__))
 
 
-def _authenticate(amazon_session: AmazonSession,
-                  retries: int = 0) -> None:
+def _authenticate(amazon_session: AmazonSession, retries: int = 0) -> None:
     try:
         if amazon_session.auth_cookies_stored():
             if amazon_session.username or amazon_session.password:
                 click.echo(
                     "Info: The given username and password are being ignored because a previous session still exists. "
-                    "To reauthenticate, call the `logout` command first.\n")
+                    "To reauthenticate, call the `logout` command first.\n"
+                )
         else:
             if not amazon_session.username:
                 amazon_session.username = click.prompt("Username")
@@ -330,7 +307,8 @@ def _authenticate(amazon_session: AmazonSession,
                 click.secho(str(f"{e}\n"), fg="red")
                 click.echo(
                     f"Info: Authenticating '{amazon_session.username}' failed. If using 2FA, wait a minute before "
-                    "retrying with a new OTP.\n")
+                    "retrying with a new OTP.\n"
+                )
 
             amazon_session.password = None
 
@@ -340,15 +318,16 @@ def _authenticate(amazon_session: AmazonSession,
 
 
 def _prompt_to_reauth_flow() -> None:
-    click.echo("... Amazon redirected to login, which likely means the persisted session is stale. It was logged "
-               "out, so try running the command again.\n")
+    click.echo(
+        "... Amazon redirected to login, which likely means the persisted session is stale. It was logged "
+        "out, so try running the command again.\n"
+    )
 
 
-def _order_output(o: Order,
-                  config: AmazonOrdersConfig) -> str:
-    order_str = """-----------------------------------------------------------------------
-Order #{order_number}
------------------------------------------------------------------------""".format(order_number=o.order_number)
+def _order_output(o: Order, config: AmazonOrdersConfig) -> str:
+    order_str = f"""-----------------------------------------------------------------------
+Order #{o.order_number}
+-----------------------------------------------------------------------"""
 
     order_str += f"\n  Shipments: {o.shipments}"
     order_str += f"\n  Order Details Link: {o.order_details_link}"
@@ -383,8 +362,7 @@ Order #{order_number}
     return order_str
 
 
-def _transaction_output(t: Transaction,
-                        config: AmazonOrdersConfig) -> str:
+def _transaction_output(t: Transaction, config: AmazonOrdersConfig) -> str:
     transaction_str = f"Transaction: {t.completed_date}"
     transaction_str += f"\n  Order #{t.order_number}"
     transaction_str += f"\n  Grand Total: {config.constants.format_currency(t.grand_total)}"

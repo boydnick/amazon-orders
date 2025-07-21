@@ -4,13 +4,12 @@ __license__ = "MIT"
 import logging
 import re
 from datetime import date
-from typing import Union, Optional
 
-from amazonorders.exception import AmazonOrdersError
 from bs4 import Tag
 
 from amazonorders.conf import AmazonOrdersConfig
 from amazonorders.entity.parsable import Parsable
+from amazonorders.exception import AmazonOrdersError
 
 logger = logging.getLogger(__name__)
 
@@ -20,10 +19,7 @@ class Transaction(Parsable):
     An Amazon Transaction.
     """
 
-    def __init__(self,
-                 parsed: Tag,
-                 config: AmazonOrdersConfig,
-                 completed_date: date) -> None:
+    def __init__(self, parsed: Tag, config: AmazonOrdersConfig, completed_date: date) -> None:
         super().__init__(parsed, config)
 
         #: The Transaction completed date.
@@ -43,25 +39,22 @@ class Transaction(Parsable):
         #: The Transaction Order details link.
         self.order_details_link: str = self.safe_parse(self._parse_order_details_link)
         #: The Transaction seller name.
-        self.seller: str = self.safe_simple_parse(
-            selector=self.config.selectors.FIELD_TRANSACTION_SELLER_NAME_SELECTOR
-        )
+        self.seller: str = self.safe_simple_parse(selector=self.config.selectors.FIELD_TRANSACTION_SELLER_NAME_SELECTOR)
 
     def __repr__(self) -> str:
-        return f"<Transaction {self.completed_date}: \"Order #{self.order_number}, Grand Total: {self.grand_total}\">"
+        return f'<Transaction {self.completed_date}: "Order #{self.order_number}, Grand Total: {self.grand_total}">'
 
     def __str__(self) -> str:  # pragma: no cover
         return f"Transaction {self.completed_date}: Order #{self.order_number}, Grand Total: {self.grand_total}"
 
-    def _parse_grand_total(self) -> Union[float, int]:
+    def _parse_grand_total(self) -> float | int:
         value = self.simple_parse(self.config.selectors.FIELD_TRANSACTION_GRAND_TOTAL_SELECTOR)
 
         value = self.to_currency(value)
 
         if value is None:
             raise AmazonOrdersError(
-                "Order.grand_total did not populate, but it's required. "
-                "Check if Amazon changed the HTML."
+                "Order.grand_total did not populate, but it's required. Check if Amazon changed the HTML."
             )  # pragma: no cover
 
         return value
@@ -71,8 +64,7 @@ class Transaction(Parsable):
 
         if value is None:
             raise AmazonOrdersError(
-                "Transaction.order_number did not populate, but it's required. "
-                "Check if Amazon changed the HTML."
+                "Transaction.order_number did not populate, but it's required. Check if Amazon changed the HTML."
             )  # pragma: no cover
 
         match = re.match(".*#([0-9-]+)$", value)
@@ -86,13 +78,13 @@ class Transaction(Parsable):
         current = self.parsed
         while current:
             prev_sibling = current.find_previous_sibling()
-            if prev_sibling and prev_sibling.name in ['h2', 'h3', 'h4']:
-                if 'in progress' in prev_sibling.get_text().lower():
+            if prev_sibling and prev_sibling.name in ["h2", "h3", "h4"]:
+                if "in progress" in prev_sibling.get_text().lower():
                     return True
             current = current.parent
         return False
 
-    def _parse_order_details_link(self) -> Optional[str]:
+    def _parse_order_details_link(self) -> str | None:
         value = self.simple_parse(self.config.selectors.FIELD_TRANSACTION_ORDER_LINK_SELECTOR, attr_name="href")
 
         if not value and self.order_number:

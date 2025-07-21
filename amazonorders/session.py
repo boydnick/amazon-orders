@@ -5,7 +5,7 @@ import json
 import logging
 import os
 import time
-from typing import Any, List, Optional, Dict
+from typing import Any
 from urllib.parse import urlencode, urlparse
 
 import requests
@@ -14,7 +14,7 @@ from requests import Response, Session
 from requests.utils import dict_from_cookiejar
 
 from amazonorders.conf import AmazonOrdersConfig, config_file_lock, cookies_file_lock, debug_output_file_lock
-from amazonorders.exception import AmazonOrdersAuthError, AmazonOrdersError, AmazonOrdersAuthRedirectError
+from amazonorders.exception import AmazonOrdersAuthError, AmazonOrdersAuthRedirectError, AmazonOrdersError
 from amazonorders.forms import AuthForm, CaptchaForm, JSAuthBlocker, MfaDeviceSelectForm, MfaForm, SignInForm
 from amazonorders.util import AmazonSessionResponse
 
@@ -28,9 +28,7 @@ class IODefault:
     if input/output should be handled another way.
     """
 
-    def echo(self,
-             msg: str,
-             **kwargs: Any) -> None:
+    def echo(self, msg: str, **kwargs: Any) -> None:
         """
         Echo a message to the console.
 
@@ -39,10 +37,7 @@ class IODefault:
         """
         print(msg)
 
-    def prompt(self,
-               msg: str,
-               type: Optional[Any] = None,
-               **kwargs: Any) -> Any:
+    def prompt(self, msg: str, type: Any | None = None, **kwargs: Any) -> Any:
         """
         Prompt to the console for user input.
 
@@ -66,39 +61,44 @@ class AmazonSession:
     To get started, call the :func:`login` function.
     """
 
-    def __init__(self,
-                 username: Optional[str] = None,
-                 password: Optional[str] = None,
-                 debug: bool = False,
-                 io: IODefault = IODefault(),
-                 config: Optional[AmazonOrdersConfig] = None,
-                 auth_forms: Optional[List] = None,
-                 otp_secret_key: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        username: str | None = None,
+        password: str | None = None,
+        debug: bool = False,
+        io: IODefault = IODefault(),
+        config: AmazonOrdersConfig | None = None,
+        auth_forms: list | None = None,
+        otp_secret_key: str | None = None,
+    ) -> None:
         if not config:
             config = AmazonOrdersConfig()
         if not auth_forms:
-            auth_forms = [SignInForm(config),
-                          MfaDeviceSelectForm(config),
-                          MfaForm(config),
-                          CaptchaForm(config),
-                          CaptchaForm(config,
-                                      config.selectors.CAPTCHA_2_FORM_SELECTOR,
-                                      config.selectors.CAPTCHA_2_ERROR_SELECTOR,
-                                      "field-keywords"),
-                          MfaForm(config,
-                                  config.selectors.CAPTCHA_OTP_FORM_SELECTOR),
-                          JSAuthBlocker(config,
-                                        config.constants.JS_ROBOT_TEXT_REGEX)]
+            auth_forms = [
+                SignInForm(config),
+                MfaDeviceSelectForm(config),
+                MfaForm(config),
+                CaptchaForm(config),
+                CaptchaForm(
+                    config,
+                    config.selectors.CAPTCHA_2_FORM_SELECTOR,
+                    config.selectors.CAPTCHA_2_ERROR_SELECTOR,
+                    "field-keywords",
+                ),
+                MfaForm(config, config.selectors.CAPTCHA_OTP_FORM_SELECTOR),
+                JSAuthBlocker(config, config.constants.JS_ROBOT_TEXT_REGEX),
+            ]
 
         #: An Amazon username. Environment variable ``AMAZON_USERNAME`` will override passed in or config value.
-        self.username: Optional[str] = os.environ.get("AMAZON_USERNAME") or username or config.username
+        self.username: str | None = os.environ.get("AMAZON_USERNAME") or username or config.username
         #: An Amazon password. Environment variable ``AMAZON_PASSWORD`` will override passed in or config value.
-        self.password: Optional[str] = os.environ.get("AMAZON_PASSWORD") or password or config.password
+        self.password: str | None = os.environ.get("AMAZON_PASSWORD") or password or config.password
         #: The secret key Amazon provides when manually adding a 2FA authenticator app. Setting this will allow
         #: one-time password challenges to be auto-solved. Environment variable ``AMAZON_OTP_SECRET_KEY`` will override
         #: passed in or config value.
-        self.otp_secret_key: Optional[str] = (os.environ.get("AMAZON_OTP_SECRET_KEY") or otp_secret_key or
-                                              config.otp_secret_key)
+        self.otp_secret_key: str | None = (
+            os.environ.get("AMAZON_OTP_SECRET_KEY") or otp_secret_key or config.otp_secret_key
+        )
 
         #: Setting logger to ``DEBUG`` will send output to ``stderr`` and write an HTML file for all requests made
         #: on the session.
@@ -111,7 +111,7 @@ class AmazonSession:
         self.config: AmazonOrdersConfig = config
         #: The list of form implementations to use with authentication. If a value is passed for this when
         #: instantiating an AmazonSession, ensure that list is populated with the default form implementations.
-        self.auth_forms: List[AuthForm] = auth_forms
+        self.auth_forms: list[AuthForm] = auth_forms
 
         #: The shared session to be used across all requests.
         self.session: Session = self._create_session()
@@ -124,16 +124,12 @@ class AmazonSession:
                 os.makedirs(cookie_dir)
         with cookies_file_lock:
             if os.path.exists(self.config.cookie_jar_path):
-                with open(self.config.cookie_jar_path, "r", encoding="utf-8") as f:
+                with open(self.config.cookie_jar_path, encoding="utf-8") as f:
                     data = json.loads(f.read())
                     cookies = requests.utils.cookiejar_from_dict(data)
                     self.session.cookies.update(cookies)
 
-    def request(self,
-                method: str,
-                url: str,
-                persist_cookies: bool = False,
-                **kwargs: Any) -> AmazonSessionResponse:
+    def request(self, method: str, url: str, persist_cookies: bool = False, **kwargs: Any) -> AmazonSessionResponse:
         """
         Execute the request against Amazon with base headers, parsing and storing the response.
 
@@ -156,8 +152,7 @@ class AmazonSession:
             logger.debug(f"{method} request: {url_to_log}")
 
         response = self.session.request(method, url, **kwargs)
-        amazon_session_response = AmazonSessionResponse(response,
-                                                        self.config.bs4_parser)
+        amazon_session_response = AmazonSessionResponse(response, self.config.bs4_parser)
 
         if persist_cookies:
             cookies = dict_from_cookiejar(self.session.cookies)
@@ -172,17 +167,13 @@ class AmazonSession:
             logger.debug(f"Response: {amazon_session_response.response.status_code}{url_str}")
 
             page_name = self._get_page_from_url(self.config.output_dir, amazon_session_response.response.url)
-            with open(os.path.join(self.config.output_dir, page_name), "w",
-                      encoding="utf-8") as html_file:
-                logger.debug(
-                    f"Response written to file: {html_file.name}")
+            with open(os.path.join(self.config.output_dir, page_name), "w", encoding="utf-8") as html_file:
+                logger.debug(f"Response written to file: {html_file.name}")
                 html_file.write(amazon_session_response.response.text)
 
         return amazon_session_response
 
-    def get(self,
-            url: str,
-            **kwargs: Any) -> AmazonSessionResponse:
+    def get(self, url: str, **kwargs: Any) -> AmazonSessionResponse:
         """
         Perform a ``GET`` request.
 
@@ -192,9 +183,7 @@ class AmazonSession:
         """
         return self.request("GET", url, **kwargs)
 
-    def post(self,
-             url: str,
-             **kwargs: Any) -> AmazonSessionResponse:
+    def post(self, url: str, **kwargs: Any) -> AmazonSessionResponse:
         """
         Perform a ``POST`` request.
 
@@ -222,8 +211,7 @@ class AmazonSession:
         If existing session data is already persisted, calling this function will still attempt to reauthenticate to
         refresh it.
         """
-        last_response = self.get(self.config.constants.SIGN_IN_URL,
-                                 params=self.config.constants.SIGN_IN_QUERY_PARAMS)
+        last_response = self.get(self.config.constants.SIGN_IN_URL, params=self.config.constants.SIGN_IN_QUERY_PARAMS)
 
         self.is_authenticated = False
         form_found = False
@@ -231,23 +219,24 @@ class AmazonSession:
         while not self.is_authenticated and attempts < self.config.max_auth_attempts:
             # TODO: BeautifulSoup doesn't let us query for #nav-item-signout, maybe because it's dynamic on the page,
             #  but we should find a better way to do this
-            if self.auth_cookies_stored() or \
-                    ("Hello, sign in" not in last_response.response.text and
-                     "nav-item-signout" in last_response.response.text):
+            if self.auth_cookies_stored() or (
+                "Hello, sign in" not in last_response.response.text
+                and "nav-item-signout" in last_response.response.text
+            ):
                 self.is_authenticated = True
                 break
 
             if attempts > 0:
-                logger.debug(f"Retrying auth flow, attempt {attempts} in "
-                             f"{self.config.auth_reattempt_wait} seconds ...")
+                logger.debug(f"Retrying auth flow, attempt {attempts} in {self.config.auth_reattempt_wait} seconds ...")
                 time.sleep(self.config.auth_reattempt_wait)
 
                 # If a form was found on the last attempt, then we already have a response to evaluate from that,
                 # otherwise (and/or if we were redirected back to the home page) re-start the auth flow for this
                 # attempt
                 if not form_found or last_response.response.url.rstrip("/") == self.config.constants.BASE_URL:
-                    last_response = self.get(self.config.constants.SIGN_IN_URL,
-                                             params=self.config.constants.SIGN_IN_QUERY_PARAMS)
+                    last_response = self.get(
+                        self.config.constants.SIGN_IN_URL, params=self.config.constants.SIGN_IN_QUERY_PARAMS
+                    )
 
                 form_found = False
 
@@ -268,7 +257,8 @@ class AmazonSession:
         if attempts == self.config.max_auth_attempts:
             raise AmazonOrdersAuthError(
                 "Authentication attempts exhausted. If authentication is correct, "
-                "try increasing AmazonOrdersConfig.max_auth_attempts.")
+                "try increasing AmazonOrdersConfig.max_auth_attempts."
+            )
 
     def logout(self) -> None:
         """
@@ -288,8 +278,7 @@ class AmazonSession:
 
         self.is_authenticated = False
 
-    def build_response_error(self,
-                             response: Response) -> str:
+    def build_response_error(self, response: Response) -> str:
         """
         Build an error message from the given response.
 
@@ -298,13 +287,15 @@ class AmazonSession:
         """
         error_msg = f"The page {response.url} returned {response.status_code}."
         if 500 <= response.status_code < 600:
-            error_msg += (" Amazon had an issue on their end, or may be temporarily blocking your requests. "
-                          "Wait a bit before trying again.")
+            error_msg += (
+                " Amazon had an issue on their end, or may be temporarily blocking your requests. "
+                "Wait a bit before trying again."
+            )
         return error_msg
 
-    def check_response(self,
-                       amazon_session_response: AmazonSessionResponse,
-                       meta: Optional[Dict[str, Any]] = None) -> None:
+    def check_response(
+        self, amazon_session_response: AmazonSessionResponse, meta: dict[str, Any] | None = None
+    ) -> None:
         """
         Check the response to ensure it appears to be returning a valid response, and that it is still authenticated.
         We detect if authentication has expired by checking for redirects to the login page. Raise an error if the
@@ -315,17 +306,17 @@ class AmazonSession:
         """
         if not amazon_session_response.response.ok:
             raise AmazonOrdersError(self.build_response_error(amazon_session_response.response), meta=meta)
-        if (amazon_session_response.response.url.startswith(self.config.constants.SIGN_IN_URL) or
-                (amazon_session_response.parsed and
-                 amazon_session_response.parsed.select_one(self.config.selectors.SIGN_IN_FORM_SELECTOR) is not None)):
+        if amazon_session_response.response.url.startswith(self.config.constants.SIGN_IN_URL) or (
+            amazon_session_response.parsed
+            and amazon_session_response.parsed.select_one(self.config.selectors.SIGN_IN_FORM_SELECTOR) is not None
+        ):
             logger.debug("Amazon redirect to login, so persisted AmazonSession will be logged out.")
             self.logout()
-            raise AmazonOrdersAuthRedirectError("Amazon redirected to login. Call AmazonSession.login() to "
-                                                "reauthenticate first.", meta=meta)
+            raise AmazonOrdersAuthRedirectError(
+                "Amazon redirected to login. Call AmazonSession.login() to reauthenticate first.", meta=meta
+            )
 
-    def _get_page_from_url(self,
-                           output_dir: str,
-                           url: str) -> str:
+    def _get_page_from_url(self, output_dir: str, url: str) -> str:
         page_name = os.path.splitext(os.path.basename(urlparse(url).path))[0]
         if not page_name:
             page_name = "index"
@@ -337,11 +328,9 @@ class AmazonSession:
                 i += 1
         return filename_frmt.format(page_name=page_name, index=i)
 
-    def _raise_auth_error(self,
-                          response: Response) -> None:
+    def _raise_auth_error(self, response: Response) -> None:
         if response.ok:
-            error_msg = (f"This is an unknown page, or its parsed contents don't match a "
-                         f"known auth flow. {response.url}")
+            error_msg = f"This is an unknown page, or its parsed contents don't match a known auth flow. {response.url}"
         else:
             error_msg = self.build_response_error(response)
 
@@ -352,7 +341,8 @@ class AmazonSession:
 
     def _create_session(self) -> Session:
         session = Session()
-        adapter = requests.adapters.HTTPAdapter(pool_connections=self.config.connection_pool_size,
-                                                pool_maxsize=self.config.connection_pool_size)
-        session.mount('https://', adapter)
+        adapter = requests.adapters.HTTPAdapter(
+            pool_connections=self.config.connection_pool_size, pool_maxsize=self.config.connection_pool_size
+        )
+        session.mount("https://", adapter)
         return session

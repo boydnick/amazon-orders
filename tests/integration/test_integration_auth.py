@@ -6,16 +6,22 @@ import os
 import time
 import unittest
 
-from amazonorders.exception import AmazonOrdersAuthError, AmazonOrdersError, AmazonOrdersNotFoundError, \
-    AmazonOrdersAuthRedirectError
+from amazonorders.exception import (
+    AmazonOrdersAuthError,
+    AmazonOrdersAuthRedirectError,
+    AmazonOrdersError,
+    AmazonOrdersNotFoundError,
+)
 from amazonorders.orders import AmazonOrders
 from amazonorders.session import AmazonSession
+
 from tests.integrationtestcase import IntegrationTestCase
 
 
-@unittest.skipIf(not os.environ.get("AMAZON_INTEGRATION_TEST_AUTH", "False") == "True",
-                 "Running auth tests too frequently may lock the account. Set "
-                 "AMAZON_INTEGRATION_TEST_AUTH=True explicitly to run.")
+@unittest.skipIf(
+    not os.environ.get("AMAZON_INTEGRATION_TEST_AUTH", "False") == "True",
+    "Running auth tests too frequently may lock the account. Set AMAZON_INTEGRATION_TEST_AUTH=True explicitly to run.",
+)
 class TestIntegrationAuth(IntegrationTestCase):
     """
     These integration tests run generically against any Amazon account to validate authentication.
@@ -35,8 +41,7 @@ class TestIntegrationAuth(IntegrationTestCase):
 
     def test_login_then_expire_persisted_session(self):
         # GIVEN
-        amazon_session = AmazonSession(debug=self.debug,
-                                       config=self.test_config)
+        amazon_session = AmazonSession(debug=self.debug, config=self.test_config)
         amazon_orders = AmazonOrders(amazon_session)
 
         # WHEN
@@ -52,7 +57,7 @@ class TestIntegrationAuth(IntegrationTestCase):
 
         # WHEN
         time.sleep(1)
-        with open(self.test_config.cookie_jar_path, "r") as f:
+        with open(self.test_config.cookie_jar_path) as f:
             cookies = json.loads(f.read())
         for cookie in self.test_config.constants.COOKIES_SET_WHEN_AUTHENTICATED:
             cookies[cookie] = "invalid-and-stale"
@@ -75,8 +80,7 @@ class TestIntegrationAuth(IntegrationTestCase):
 
     def test_logout(self):
         # GIVEN
-        amazon_session = AmazonSession(debug=self.debug,
-                                       config=self.test_config)
+        amazon_session = AmazonSession(debug=self.debug, config=self.test_config)
         amazon_session.login()
         old_session = amazon_session.session
         time.sleep(1)
@@ -94,8 +98,7 @@ class TestIntegrationAuth(IntegrationTestCase):
         os.environ["AMAZON_USERNAME"] = "invalid-username"
 
         # GIVEN
-        amazon_session = AmazonSession(debug=self.debug,
-                                       config=self.test_config)
+        amazon_session = AmazonSession(debug=self.debug, config=self.test_config)
 
         # WHEN
         with self.assertRaises(AmazonOrdersAuthError) as cm:
@@ -107,17 +110,18 @@ class TestIntegrationAuth(IntegrationTestCase):
 
         os.environ["AMAZON_USERNAME"] = amazon_username
 
-    @unittest.skipIf(not os.environ.get("AMAZON_INTEGRATION_TEST_AUTH_WRONG_PASSWORD", "False") == "True",
-                     "Running this test too too frequently will trigger the Captcha flow instead (causing"
-                     "the test to fail), and also may lock the Amazon account. Set "
-                     "AMAZON_INTEGRATION_TEST_AUTH_WRONG_PASSWORD=True explicitly to run.")
+    @unittest.skipIf(
+        not os.environ.get("AMAZON_INTEGRATION_TEST_AUTH_WRONG_PASSWORD", "False") == "True",
+        "Running this test too too frequently will trigger the Captcha flow instead (causing"
+        "the test to fail), and also may lock the Amazon account. Set "
+        "AMAZON_INTEGRATION_TEST_AUTH_WRONG_PASSWORD=True explicitly to run.",
+    )
     def test_login_wrong_password(self):
         amazon_password = os.environ["AMAZON_PASSWORD"]
         os.environ["AMAZON_PASSWORD"] = "invalid-password"
 
         # GIVEN
-        amazon_session = AmazonSession(debug=self.debug,
-                                       config=self.test_config)
+        amazon_session = AmazonSession(debug=self.debug, config=self.test_config)
 
         # WHEN
         with self.assertRaises(AmazonOrdersError) as cm:

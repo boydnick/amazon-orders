@@ -10,6 +10,7 @@ from amazonorders.conf import AmazonOrdersConfig
 from amazonorders.orders import AmazonOrders
 from amazonorders.session import AmazonSession
 from amazonorders.transactions import AmazonTransactions
+
 from tests.testcase import TestCase
 
 
@@ -30,8 +31,7 @@ class IntegrationTestCase(TestCase):
         cls.set_up_class_conf()
 
         cls.debug = os.environ.get("DEBUG", "False") == "True"
-        cls.amazon_session = AmazonSession(debug=cls.debug,
-                                           config=cls.test_config)
+        cls.amazon_session = AmazonSession(debug=cls.debug, config=cls.test_config)
         cls.amazon_session.login()
 
         cls.amazon_orders = AmazonOrders(cls.amazon_session)
@@ -54,10 +54,9 @@ class IntegrationTestCase(TestCase):
         conf.DEFAULT_CONFIG_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), ".integration-config")
         test_output_dir = os.path.join(conf.DEFAULT_CONFIG_DIR, "output")
         test_cookie_jar_path = os.path.join(conf.DEFAULT_CONFIG_DIR, "cookies.json")
-        cls.test_config = AmazonOrdersConfig(data={
-            "output_dir": test_output_dir,
-            "cookie_jar_path": test_cookie_jar_path
-        })
+        cls.test_config = AmazonOrdersConfig(
+            data={"output_dir": test_output_dir, "cookie_jar_path": test_cookie_jar_path}
+        )
 
         if os.path.exists(test_cookie_jar_path):
             os.remove(test_cookie_jar_path)

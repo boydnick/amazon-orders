@@ -11,9 +11,7 @@ from parameterized import parameterized
 
 from tests.integrationtestcase import IntegrationTestCase
 
-PRIVATE_RESOURCES_DIR = os.path.normpath(
-    os.path.join(os.path.abspath(os.path.dirname(__file__)),
-                 "private-resources"))
+PRIVATE_RESOURCES_DIR = os.path.normpath(os.path.join(os.path.abspath(os.path.dirname(__file__)), "private-resources"))
 
 private_json_file_data = []
 if os.path.exists(PRIVATE_RESOURCES_DIR):
@@ -21,7 +19,7 @@ if os.path.exists(PRIVATE_RESOURCES_DIR):
         if filename == ".gitignore" or filename.startswith("example-"):
             continue
 
-        with open(os.path.join(PRIVATE_RESOURCES_DIR, filename), "r", encoding="utf-8") as f:
+        with open(os.path.join(PRIVATE_RESOURCES_DIR, filename), encoding="utf-8") as f:
             data = json.loads(f.read())
             private_json_file_data.append((filename, data))
 
@@ -39,8 +37,7 @@ if os.environ.get("AMAZON_INTEGRATION_TEST_JSON"):
         i += 1
 
 
-@unittest.skipIf(not os.environ.get("AMAZON_INTEGRATION_TEST_JSON"),
-                 "AMAZON_INTEGRATION_TEST_JSON is not set")
+@unittest.skipIf(not os.environ.get("AMAZON_INTEGRATION_TEST_JSON"), "AMAZON_INTEGRATION_TEST_JSON is not set")
 class TestIntegrationJSON(IntegrationTestCase):
     """
     The two JSON files committed to "private-resources" are provided as examples of the syntax. Any other
@@ -172,8 +169,7 @@ class TestIntegrationJSON(IntegrationTestCase):
                 transaction = transactions[int(index)]
                 self.assert_json_items(transaction, transaction_json)
         else:
-            self.fail(
-                f"Unknown function AmazonOrders. {func}, check JSON in test file {filename}")
+            self.fail(f"Unknown function AmazonOrders. {func}, check JSON in test file {filename}")
 
     def assert_json_items(self, entity, json_dict):
         for json_key, json_value in json_dict.items():
@@ -191,7 +187,6 @@ class TestIntegrationJSON(IntegrationTestCase):
                 self.assert_json_items(entity_attr, json_value)
             else:
                 try:
-                    self.assertEqual(
-                        datetime.strptime(json_value, "%Y-%m-%d").date(), entity_attr)
+                    self.assertEqual(datetime.strptime(json_value, "%Y-%m-%d").date(), entity_attr)
                 except (TypeError, ValueError):
                     self.assertEqual(json_value, entity_attr)

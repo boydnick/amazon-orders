@@ -1,7 +1,7 @@
 import logging
 import os
 import threading
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 import yaml
 
@@ -28,9 +28,7 @@ class AmazonOrdersConfig:
     `here <https://amazon-orders.readthedocs.io/_modules/amazonorders/conf.html#AmazonOrdersConfig>`_.
     """
 
-    def __init__(self,
-                 config_path: Optional[str] = None,
-                 data: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, config_path: str | None = None, data: dict[str, Any] | None = None) -> None:
         #: The path to use for the config file.
         self.config_path: str = os.path.join(DEFAULT_CONFIG_DIR, "config.yml") if config_path is None else config_path
 
@@ -53,7 +51,7 @@ class AmazonOrdersConfig:
             "thread_pool_size": (os.cpu_count() or 1) * 4,
             "connection_pool_size": thread_pool_size * 2,
             # The maximum number of failed attempts to allow before failing CLI authentication
-            "max_auth_retries": 1
+            "max_auth_retries": 1,
         }
 
         with config_file_lock:
@@ -63,7 +61,7 @@ class AmazonOrdersConfig:
                 os.makedirs(config_dir)
 
             if os.path.exists(self.config_path):
-                with open(self.config_path, "r") as config_file:
+                with open(self.config_path) as config_file:
                     logger.debug(f"Loading config from {self.config_path} ...")
                     config = yaml.safe_load(config_file)
                     if config is not None:
@@ -93,19 +91,16 @@ class AmazonOrdersConfig:
         self.shipment_cls = util.load_class(shipment_class_split[:-1], shipment_class_split[-1])
         self.item_cls = util.load_class(item_class_split[:-1], item_class_split[-1])
 
-    def __getattr__(self,
-                    key: str) -> Any:
+    def __getattr__(self, key: str) -> Any:
         return self._data.get(key, None)
 
-    def __contains__(self,
-                     key: str) -> bool:
+    def __contains__(self, key: str) -> bool:
         return key in self._data
 
-    def __getstate__(self) -> Dict[str, Any]:
+    def __getstate__(self) -> dict[str, Any]:
         return self._data
 
-    def __setstate__(self,
-                     state: Dict[str, Any]) -> None:
+    def __setstate__(self, state: dict[str, Any]) -> None:
         self._data = state
         constants_class_split = self.constants_class.split(".")
         selectors_class_split = self.selectors_class.split(".")
@@ -119,10 +114,7 @@ class AmazonOrdersConfig:
         self.shipment_cls = util.load_class(shipment_class_split[:-1], shipment_class_split[-1])
         self.item_cls = util.load_class(item_class_split[:-1], item_class_split[-1])
 
-    def update_config(self,
-                      key: str,
-                      value: Union[str, int, float],
-                      save: bool = True) -> None:
+    def update_config(self, key: str, value: str | int | float, save: bool = True) -> None:
         """
         Update the given key/value pair in the config object. By default, this update will also be persisted to the
         config file. If only the object should be updated without persisting, pass ``save=False``.

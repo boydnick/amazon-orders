@@ -2,9 +2,8 @@ __copyright__ = "Copyright (c) 2024-2025 Alex Laird"
 __license__ = "MIT"
 
 from amazonorders.conf import AmazonOrdersConfig
-from bs4 import BeautifulSoup
-
 from amazonorders.entity.item import Item
+from bs4 import BeautifulSoup
 from tests.unittestcase import UnitTestCase
 
 
@@ -42,11 +41,13 @@ class TestItem(UnitTestCase):
 
     def test_title_starts_with_ampersand_use_lxml(self):
         # GIVEN
-        lxml_config = AmazonOrdersConfig(data={
-            "output_dir": self.test_output_dir,
-            "cookie_jar_path": self.test_cookie_jar_path,
-            "bs4_parser": "lxml"
-        })
+        lxml_config = AmazonOrdersConfig(
+            data={
+                "output_dir": self.test_output_dir,
+                "cookie_jar_path": self.test_cookie_jar_path,
+                "bs4_parser": "lxml",
+            }
+        )
         html = """
 <div class="a-fixed-left-grid-col yohtmlc-item a-col-right" style="padding-left:1.5%;float:left;">
 <div class="a-row">

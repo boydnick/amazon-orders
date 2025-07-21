@@ -3,7 +3,7 @@ __license__ = "MIT"
 
 import datetime
 import logging
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any
 
 from bs4 import Tag
 from dateutil import parser
@@ -17,9 +17,9 @@ from amazonorders.session import AmazonSession
 logger = logging.getLogger(__name__)
 
 
-def _parse_transaction_form_tag(form_tag: Tag,
-                                config: AmazonOrdersConfig) \
-        -> Tuple[List[Transaction], Optional[Dict[str, str]]]:
+def _parse_transaction_form_tag(
+    form_tag: Tag, config: AmazonOrdersConfig
+) -> tuple[list[Transaction], dict[str, str] | None]:
     transactions = []
     date_container_tags = util.select(form_tag, config.selectors.TRANSACTION_DATE_CONTAINERS_SELECTOR)
     for date_container_tag in date_container_tags:
@@ -32,7 +32,8 @@ def _parse_transaction_form_tag(form_tag: Tag,
         date = parser.parse(date_str).date()
 
         transactions_container_tag = date_container_tag.find_next_sibling(
-            config.selectors.TRANSACTIONS_CONTAINER_SELECTOR)
+            config.selectors.TRANSACTIONS_CONTAINER_SELECTOR
+        )
         if not isinstance(transactions_container_tag, Tag):
             logger.warning("Could not find Transactions container tag in Transaction form.")
             continue
@@ -63,10 +64,9 @@ class AmazonTransactions:
     for Transaction details and history.
     """
 
-    def __init__(self,
-                 amazon_session: AmazonSession,
-                 debug: Optional[bool] = None,
-                 config: Optional[AmazonOrdersConfig] = None) -> None:
+    def __init__(
+        self, amazon_session: AmazonSession, debug: bool | None = None, config: AmazonOrdersConfig | None = None
+    ) -> None:
         if not debug:
             debug = amazon_session.debug
         if not config:
@@ -82,10 +82,9 @@ class AmazonTransactions:
         if self.debug:
             logger.setLevel(logging.DEBUG)
 
-    def get_transactions(self,
-                         days: int = 365,
-                         next_page_data: Optional[Dict[str, Any]] = None,
-                         keep_paging: bool = True) -> List[Transaction]:
+    def get_transactions(
+        self, days: int = 365, next_page_data: dict[str, Any] | None = None, keep_paging: bool = True
+    ) -> list[Transaction]:
         """
         Get Amazon Transaction history for a given number of days.
 
@@ -100,29 +99,26 @@ class AmazonTransactions:
 
         min_date = datetime.date.today() - datetime.timedelta(days=days)
 
-        transactions: List[Transaction] = []
+        transactions: list[Transaction] = []
         first_page = True
         while first_page or keep_paging:
             first_page = False
 
-            page_response = self.amazon_session.post(self.config.constants.TRANSACTION_HISTORY_URL,
-                                                     data=next_page_data)
+            page_response = self.amazon_session.post(self.config.constants.TRANSACTION_HISTORY_URL, data=next_page_data)
             self.amazon_session.check_response(page_response, meta=next_page_data)
 
-            form_tag = util.select_one(page_response.parsed,
-                                       self.config.selectors.TRANSACTION_HISTORY_FORM_SELECTOR)
+            form_tag = util.select_one(page_response.parsed, self.config.selectors.TRANSACTION_HISTORY_FORM_SELECTOR)
 
             if not form_tag:
-                transaction_container = util.select_one(page_response.parsed,
-                                                        self.config.selectors.TRANSACTION_HISTORY_CONTAINER_SELECTOR)
+                transaction_container = util.select_one(
+                    page_response.parsed, self.config.selectors.TRANSACTION_HISTORY_CONTAINER_SELECTOR
+                )
                 if transaction_container and "don't have any transactions" in transaction_container.text:
                     break
                 else:
                     raise AmazonOrdersError("Could not parse Transaction history. Check if Amazon changed the HTML.")
 
-            loaded_transactions, next_page_data = (
-                _parse_transaction_form_tag(form_tag, self.config)
-            )
+            loaded_transactions, next_page_data = _parse_transaction_form_tag(form_tag, self.config)
 
             for transaction in loaded_transactions:
                 if transaction.completed_date >= min_date:

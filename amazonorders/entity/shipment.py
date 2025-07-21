@@ -2,7 +2,7 @@ __copyright__ = "Copyright (c) 2024-2025 Alex Laird"
 __license__ = "MIT"
 
 import logging
-from typing import List, Optional, TypeVar
+from typing import TypeVar
 
 from bs4 import Tag
 
@@ -21,40 +21,39 @@ class Shipment(Parsable):
     An Amazon Shipment, which should contain one or more :class:`~amazonorders.entity.item.Item`'s.
     """
 
-    def __init__(self,
-                 parsed: Tag,
-                 config: AmazonOrdersConfig) -> None:
+    def __init__(self, parsed: Tag, config: AmazonOrdersConfig) -> None:
         super().__init__(parsed, config)
 
         #: The Shipment Items.
-        self.items: List[Item] = self._parse_items()
+        self.items: list[Item] = self._parse_items()
         #: The Shipment delivery status.
-        self.delivery_status: Optional[str] = self.safe_simple_parse(
-            selector=self.config.selectors.FIELD_SHIPMENT_DELIVERY_STATUS_SELECTOR)
+        self.delivery_status: str | None = self.safe_simple_parse(
+            selector=self.config.selectors.FIELD_SHIPMENT_DELIVERY_STATUS_SELECTOR
+        )
         #: The Shipment tracking link.
-        self.tracking_link: Optional[str] = self.safe_simple_parse(
-            selector=self.config.selectors.FIELD_SHIPMENT_TRACKING_LINK_SELECTOR,
-            attr_name="href")
+        self.tracking_link: str | None = self.safe_simple_parse(
+            selector=self.config.selectors.FIELD_SHIPMENT_TRACKING_LINK_SELECTOR, attr_name="href"
+        )
 
     def __repr__(self) -> str:
-        return f"<Shipment: \"{self.items}\">"
+        return f'<Shipment: "{self.items}">'
 
     def __str__(self) -> str:  # pragma: no cover
         return f"Shipment: {self.items}"
 
-    def __lt__(self,
-               other: ShipmentEntity) -> bool:
+    def __lt__(self, other: ShipmentEntity) -> bool:
         if self.delivery_status:
             return self.delivery_status < str(other.delivery_status if other.delivery_status else "")
         else:
             return str(self.items) < str(other.items)
 
-    def _parse_items(self) -> List[Item]:
+    def _parse_items(self) -> list[Item]:
         if not self.parsed:
             return []
 
-        items: List[Item] = [self.config.item_cls(x, self.config)
-                             for x in util.select(self.parsed,
-                                                  self.config.selectors.ITEM_ENTITY_SELECTOR)]
+        items: list[Item] = [
+            self.config.item_cls(x, self.config)
+            for x in util.select(self.parsed, self.config.selectors.ITEM_ENTITY_SELECTOR)
+        ]
         items.sort()
         return items

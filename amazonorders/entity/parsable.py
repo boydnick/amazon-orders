@@ -3,8 +3,9 @@ __license__ = "MIT"
 
 import logging
 import re
+from collections.abc import Callable
 from datetime import date
-from typing import Any, Callable, Dict, Optional, Type, Union
+from typing import Any
 
 from bs4 import Tag
 from dateutil import parser
@@ -22,22 +23,18 @@ class Parsable:
     utilizes the common the helper methods.
     """
 
-    def __init__(self,
-                 parsed: Tag,
-                 config: AmazonOrdersConfig) -> None:
+    def __init__(self, parsed: Tag, config: AmazonOrdersConfig) -> None:
         #: Parsed HTML data that can be used to populate the fields of the entity.
         self.parsed: Tag = parsed
         #: The config to use.
         self.config: AmazonOrdersConfig = config
 
-    def __getstate__(self) -> Dict:
+    def __getstate__(self) -> dict:
         state = self.__dict__.copy()
         state.pop("parsed")
         return state
 
-    def safe_parse(self,
-                   parse_function: Callable[..., Any],
-                   **kwargs: Any) -> Any:
+    def safe_parse(self, parse_function: Callable[..., Any], **kwargs: Any) -> Any:
         """
         Execute the given parse function on a field, handling any common parse exceptions and passing
         them as warnings to the logger (suppressing them as exceptions).
@@ -47,8 +44,7 @@ class Parsable:
         :return: The return value from ``parse_function``.
         """
         if not parse_function.__name__.startswith("_parse_") and parse_function.__name__ != "simple_parse":
-            raise AmazonOrdersError("The name of the `parse_function` passed "
-                                    "to this method must start with `_parse_`.")
+            raise AmazonOrdersError("The name of the `parse_function` passed to this method must start with `_parse_`.")
 
         try:
             return parse_function(**kwargs)
@@ -56,24 +52,22 @@ class Parsable:
             function = "simple_parse"
             if parse_function.__name__ != function:
                 function = parse_function.__name__.split("_parse_")[1]
-            logger.warning(
-                "When building {name}, `{function}` "
-                "could not be parsed.".format(name=self.__class__.__name__,
-                                              function=function),
-                exc_info=True)
+            logger.warning(f"When building {self.__class__.__name__}, `{function}` could not be parsed.", exc_info=True)
             return None
 
-    def simple_parse(self,
-                     selector: Union[str, list],
-                     attr_name: Optional[str] = None,
-                     text_contains: Optional[str] = None,
-                     required: bool = False,
-                     prefix_split: Optional[str] = None,
-                     wrap_tag: Optional[Type] = None,
-                     parse_date: bool = False,
-                     prefix_split_fuzzy: bool = False,
-                     suffix_split: Optional[str] = None,
-                     suffix_split_fuzzy: bool = False) -> Any:
+    def simple_parse(
+        self,
+        selector: str | list,
+        attr_name: str | None = None,
+        text_contains: str | None = None,
+        required: bool = False,
+        prefix_split: str | None = None,
+        wrap_tag: type | None = None,
+        parse_date: bool = False,
+        prefix_split_fuzzy: bool = False,
+        suffix_split: str | None = None,
+        suffix_split_fuzzy: bool = False,
+    ) -> Any:
         """
         Will attempt to extract the text value of the given CSS selector(s) for a field, and
         is suitable for most basic functionality on a well-formed page.
@@ -100,7 +94,7 @@ class Parsable:
         if isinstance(selector, str):
             selector = [selector]
 
-        value: Union[int, float, bool, date, str, None] = None
+        value: int | float | bool | date | str | None = None
 
         for s in selector:
             for tag in self.parsed.select(s):
@@ -152,15 +146,12 @@ class Parsable:
 
         if value is None and required:
             raise AmazonOrdersEntityError(
-                "When building {name}, field for selector `{selector}` was None, but this is not allowed.".format(
-                    name=self.__class__.__name__,
-                    selector=selector))
+                f"When building {self.__class__.__name__}, field for selector `{selector}` was None, but this is not allowed."
+            )
 
         return value
 
-    def safe_simple_parse(self,
-                          selector: Union[str, list],
-                          **kwargs: Any) -> Any:
+    def safe_simple_parse(self, selector: str | list, **kwargs: Any) -> Any:
         """
         A helper function that uses :func:`simple_parse` as the ``parse_function()`` passed to :func:`safe_parse`.
 
@@ -170,8 +161,7 @@ class Parsable:
         """
         return self.safe_parse(self.simple_parse, selector=selector, **kwargs)
 
-    def with_base_url(self,
-                      url: str) -> str:
+    def with_base_url(self, url: str) -> str:
         """
         If the given URL is relative, the ``BASE_URL`` will be prepended.
 
@@ -182,8 +172,7 @@ class Parsable:
             url = f"{self.config.constants.BASE_URL}{url}"
         return url
 
-    def to_currency(self,
-                    value: Union[str, int, float]) -> Union[int, float, None]:
+    def to_currency(self, value: str | int | float) -> int | float | None:
         """
         Clean up a currency, stripping non-numeric values and returning it as a primitive.
 

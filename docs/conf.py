@@ -44,7 +44,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
     "notfound.extension",
-    "sphinx_autodoc_typehints"
+    "sphinx_autodoc_typehints",
 ]
 autodoc_member_order = "bysource"
 
@@ -54,9 +54,7 @@ templates_path = ["_templates"]
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-source_suffix = [
-    ".rst"
-]
+source_suffix = [".rst"]
 
 # The master toctree document.
 master_doc = "index"
@@ -140,15 +138,12 @@ latex_elements = {
     # The paper size ("letterpaper" or "a4paper").
     #
     # "papersize": "letterpaper",
-
     # The font size ("10pt", "11pt" or "12pt").
     #
     # "pointsize": "10pt",
-
     # Additional stuff for the LaTeX preamble.
     #
     # "preamble": "",
-
     # Latex figure (float) alignment
     #
     # "figure_align": "htbp",
@@ -158,18 +153,14 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "amazonorders.tex", "amazon-orders Documentation",
-     author, "manual"),
+    (master_doc, "amazonorders.tex", "amazon-orders Documentation", author, "manual"),
 ]
 
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, "amazonorders", "amazon-orders Documentation",
-     [author], 1)
-]
+man_pages = [(master_doc, "amazonorders", "amazon-orders Documentation", [author], 1)]
 
 # -- Options for Texinfo output ----------------------------------------------
 
@@ -177,10 +168,15 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, "amazonorders", "amazon-orders Documentation",
-     author, "amazon-orders",
-     "A Python libray (and CLI) for Amazon order history",
-     "Miscellaneous"),
+    (
+        master_doc,
+        "amazonorders",
+        "amazon-orders Documentation",
+        author,
+        "amazon-orders",
+        "A Python libray (and CLI) for Amazon order history",
+        "Miscellaneous",
+    ),
 ]
 
 # -- Options for Epub output -------------------------------------------------
@@ -206,5 +202,5 @@ intersphinx_mapping = {
     "click": ("https://click.palletsprojects.com/en/latest", None),
     "requests": ("https://requests.readthedocs.io/en/latest/", None),
     "beautifulsoup4": ("https://www.crummy.com/software/BeautifulSoup/bs4/doc/", None),
-    "python": ("https://docs.python.org/3", None)
+    "python": ("https://docs.python.org/3", None),
 }

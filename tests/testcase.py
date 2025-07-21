@@ -61,10 +61,10 @@ class TestCase(unittest.TestCase):
         self.assertEqual(1, len(order.items))
         self.assertEqual(
             "Taste Of The Wild Rocky Mountain Grain-Free Dry Cat Food With Roasted Venison & Smoked Salmon 15Lb",
-            order.items[0].title)
+            order.items[0].title,
+        )
         self.assertIsNotNone(order.items[0].link)
-        self.assertEqual(date(2019, 2, 2),
-                         order.items[0].return_eligible_date)
+        self.assertEqual(date(2019, 2, 2), order.items[0].return_eligible_date)
         self.assertIsNotNone(order.items[0].image_link)
 
         self.assertEqual(order.full_details, full_details)
@@ -78,8 +78,7 @@ class TestCase(unittest.TestCase):
             self.assertEqual(30.99, order.total_before_tax)
             self.assertEqual(3.02, order.estimated_tax)
             self.assertEqual(30.99, order.items[0].price)
-            self.assertEqual("Amazon.com Services, Inc",
-                             order.items[0].seller.name)
+            self.assertEqual("Amazon.com Services, Inc", order.items[0].seller.name)
             self.assertIsNone(order.items[0].seller.link)
 
     def assert_order_114_9460922_7737063(self, order, full_details):
@@ -90,13 +89,13 @@ class TestCase(unittest.TestCase):
         self.assertEqual("Alex Laird", order.recipient.name)
         self.assertIsNotNone(order.recipient.address)
         self.assertEqual(1, len(order.shipments))
-        self.assertEqual(str(order.items),
-                         str(order.shipments[0].items))
+        self.assertEqual(str(order.items), str(order.shipments[0].items))
         self.assertIsNone(order.shipments[0].tracking_link)
         self.assertIsNone(order.shipments[0].delivery_status)
         self.assertEqual(1, len(order.items))
-        self.assertEqual("Bounty Quick-Size Paper Towels, White, 16 Family Rolls = 40 Regular Rolls",
-                         order.items[0].title)
+        self.assertEqual(
+            "Bounty Quick-Size Paper Towels, White, 16 Family Rolls = 40 Regular Rolls", order.items[0].title
+        )
         self.assertIsNotNone(order.items[0].link)
         self.assertIsNotNone(order.items[0].image_link)
         self.assertIsNone(order.items[0].return_eligible_date)
@@ -112,8 +111,7 @@ class TestCase(unittest.TestCase):
             self.assertEqual(33.01, order.total_before_tax)
             self.assertEqual(2.89, order.estimated_tax)
             self.assertEqual(38.84, order.items[0].price)
-            self.assertEqual("Amazon.com Services, Inc",
-                             order.items[0].seller.name)
+            self.assertEqual("Amazon.com Services, Inc", order.items[0].seller.name)
             self.assertIsNone(order.items[0].seller.link)
 
     def assert_order_112_2961628_4757846_return(self, order, full_details):
@@ -124,13 +122,11 @@ class TestCase(unittest.TestCase):
         self.assertEqual("Alex Laird", order.recipient.name)
         self.assertIsNotNone(order.recipient.address)
         self.assertEqual(1, len(order.shipments))
-        self.assertEqual(str(order.items),
-                         str(order.shipments[0].items))
+        self.assertEqual(str(order.items), str(order.shipments[0].items))
         self.assertIsNone(order.shipments[0].tracking_link)
         self.assertTrue("Return complete", order.shipments[0].delivery_status)
         self.assertEqual(1, len(order.items))
-        self.assertEqual("Nintendo Switch Pro Controller",
-                         order.items[0].title)
+        self.assertEqual("Nintendo Switch Pro Controller", order.items[0].title)
         self.assertIsNotNone(order.items[0].link)
         self.assertIsNotNone(order.items[0].image_link)
         self.assertIsNone(order.items[0].return_eligible_date)
@@ -147,8 +143,7 @@ class TestCase(unittest.TestCase):
             self.assertEqual(6.12, order.estimated_tax)
             self.assertEqual(76.11, order.refund_total)
             self.assertEqual(69.99, order.items[0].price)
-            self.assertEqual("Amazon.com Services, Inc",
-                             order.items[0].seller.name)
+            self.assertEqual("Amazon.com Services, Inc", order.items[0].seller.name)
             self.assertIsNone(order.items[0].seller.link)
 
     def assert_order_112_8888666_5244209_quantity(self, order):
@@ -168,8 +163,7 @@ class TestCase(unittest.TestCase):
         for shipment in order.shipments:
             self.assertEqual(1, len(shipment.items))
             order_item = next(filter(lambda i: i.title == shipment.items[0].title, order.items))
-            self.assertEqual(str(order_item),
-                             str(shipment.items[0]))
+            self.assertEqual(str(order_item), str(shipment.items[0]))
             if "TestIntegration" not in self.__class__.__name__:
                 self.assertIsNotNone(shipment.tracking_link)
             if "Cadeya" in shipment.items[0].title:
@@ -180,8 +174,7 @@ class TestCase(unittest.TestCase):
                 self.assertEqual("Delivered Dec 8, 2023", shipment.delivery_status)
         self.assertTrue(found_cadeya)
         self.assertTrue(found_amazon)
-        self.assertEqual(str(order.items),
-                         str(order.shipments[1].items + order.shipments[0].items))
+        self.assertEqual(str(order.items), str(order.shipments[1].items + order.shipments[0].items))
         self.assertEqual(2, len(order.items))
         found_cadeya = False
         found_amazon = False
@@ -191,7 +184,8 @@ class TestCase(unittest.TestCase):
                 self.assertEqual(
                     "Cadeya Egg Cleaning Brush Silicone, Egg Scrubber for Fresh Eggs, Reusable Cleaning Tools "
                     "for Egg Washer (Pink)",
-                    order_item.title)
+                    order_item.title,
+                )
                 self.assertIsNotNone(order_item.link)
                 self.assertEqual(date(2024, 1, 31), order_item.return_eligible_date)
             else:
@@ -199,7 +193,8 @@ class TestCase(unittest.TestCase):
                 self.assertEqual(
                     "Swiffer WetJet Hardwood and Floor Spray Mop Cleaner Starter Kit, Includes: 1 Power Mop, "
                     "10 Pads, Cleaning Solution, Batteries",
-                    order_item.title)
+                    order_item.title,
+                )
                 self.assertIsNotNone(order_item.link)
                 self.assertEqual(date(2024, 1, 31), order_item.return_eligible_date)
         self.assertTrue(found_cadeya)
@@ -227,8 +222,7 @@ class TestCase(unittest.TestCase):
                     self.assertIsNotNone(seller.link)
                 else:
                     found_amazon = True
-                    self.assertEqual("Amazon.com Services, Inc",
-                                     seller.name)
+                    self.assertEqual("Amazon.com Services, Inc", seller.name)
                     self.assertIsNone(seller.link)
             self.assertTrue(found_cadeya)
             self.assertTrue(found_amazon)
@@ -246,8 +240,7 @@ class TestCase(unittest.TestCase):
         for shipment in order.shipments:
             self.assertEqual(1, len(shipment.items))
             order_item = next(filter(lambda i: i.title == shipment.items[0].title, order.items))
-            self.assertEqual(str(order_item),
-                             str(shipment.items[0]))
+            self.assertEqual(str(order_item), str(shipment.items[0]))
             if "TestIntegration" not in self.__class__.__name__:
                 self.assertIsNotNone(shipment.tracking_link)
             if "kimoe" in shipment.items[0].title:
@@ -258,8 +251,7 @@ class TestCase(unittest.TestCase):
                 self.assertIn("Delivered May 13", shipment.delivery_status)
         self.assertTrue(found_kimoe)
         self.assertTrue(found_amazon)
-        self.assertEqual(str(order.items.sort()),
-                         str((order.shipments[0].items + order.shipments[1].items).sort()))
+        self.assertEqual(str(order.items.sort()), str((order.shipments[0].items + order.shipments[1].items).sort()))
         self.assertEqual(2, len(order.items))
         found_kimoe = False
         found_amazon = False
@@ -268,7 +260,8 @@ class TestCase(unittest.TestCase):
                 found_kimoe = True
                 self.assertEqual(
                     "kimoe 5LB 100% Natural Non-GMO Dried mealworms-High-Protein for Birds, Chicken，Ducks",
-                    order_item.title)
+                    order_item.title,
+                )
                 self.assertIsNotNone(order_item.link)
                 self.assertIsNone(order_item.return_eligible_date)
             else:
@@ -276,7 +269,8 @@ class TestCase(unittest.TestCase):
                 self.assertEqual(
                     "Go Green Power Inc. GG-13725BK 16/3 Heavy Duty Extension Cord, Outdoor Extension Cord, "
                     "Black, 25 ft",
-                    order_item.title)
+                    order_item.title,
+                )
                 self.assertIsNotNone(order_item.link)
                 self.assertEqual(date(2024, 6, 12), order_item.return_eligible_date)
         self.assertTrue(found_kimoe)
@@ -304,8 +298,7 @@ class TestCase(unittest.TestCase):
                     self.assertIsNotNone(seller.link)
                 else:
                     found_amazon = True
-                    self.assertEqual("Amazon.com Services, Inc",
-                                     seller.name)
+                    self.assertEqual("Amazon.com Services, Inc", seller.name)
                     self.assertIsNone(seller.link)
             self.assertTrue(found_kimoe)
             self.assertTrue(found_amazon)
@@ -315,8 +308,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(28.80, order.grand_total)
         self.assertEqual(1, len(order.shipments))
         self.assertEqual(2, len(order.items))
-        self.assertEqual(str(order.items),
-                         str(order.shipments[0].items))
+        self.assertEqual(str(order.items), str(order.shipments[0].items))
         found_aaa = False
         found_aa = False
         for item in order.items:
@@ -325,7 +317,8 @@ class TestCase(unittest.TestCase):
                 self.assertEqual(
                     "AmazonBasics 36 Pack AAA High-Performance Alkaline Batteries, 10-Year Shelf Life, Easy to "
                     "Open Value Pack",
-                    item.title)
+                    item.title,
+                )
                 self.assertIsNotNone(item.link)
                 # TODO: this actually is shown on the page, it's just collapsed, find a way to parse it
                 self.assertIsNone(item.return_eligible_date)
@@ -334,7 +327,8 @@ class TestCase(unittest.TestCase):
                 self.assertEqual(
                     "AmazonBasics 48 Pack AA High-Performance Alkaline Batteries, 10-Year Shelf Life, Easy to "
                     "Open Value Pack",
-                    item.title)
+                    item.title,
+                )
                 self.assertIsNotNone(item.link)
                 # TODO: this actually is shown on the page, it's just collapsed, find a way to parse it
                 self.assertIsNone(item.return_eligible_date)
@@ -357,14 +351,12 @@ class TestCase(unittest.TestCase):
                 if "AAA" in item.title:
                     found_aa = True
                     self.assertEqual(10.99, item.price)
-                    self.assertEqual("Amazon.com Services, Inc",
-                                     item.seller.name)
+                    self.assertEqual("Amazon.com Services, Inc", item.seller.name)
                     self.assertIsNone(item.seller.link)
                 else:
                     found_aaa = True
                     self.assertEqual(15.49, item.price)
-                    self.assertEqual("Amazon.com Services, Inc",
-                                     item.seller.name)
+                    self.assertEqual("Amazon.com Services, Inc", item.seller.name)
                     self.assertIsNone(item.seller.link)
             self.assertTrue(found_aa)
             self.assertTrue(found_aaa)
@@ -377,15 +369,16 @@ class TestCase(unittest.TestCase):
         self.assertEqual("Alex Laird", order.recipient.name)
         self.assertIn("555 My Road", order.recipient.address)
         self.assertEqual(1, len(order.shipments))
-        self.assertEqual(str(order.items),
-                         str(order.shipments[0].items))
+        self.assertEqual(str(order.items), str(order.shipments[0].items))
         self.assertIsNotNone(order.shipments[0].tracking_link)
         self.assertEqual("Delivered November 2", order.shipments[0].delivery_status)
         self.assertEqual(1, len(order.items))
-        self.assertEqual("2 Set Replacement Parts Roller Brushes Compatible for iRobot Roomba E I and J Series, "
-                         "Brush Replacement for iRobot Roomba i3 i3+ i6 i6+ i7 i7+ i8 i8+Plus E5 E6 E7 j7 j7+ evo "
-                         "Vacuum Cleaner Accessories",
-                         order.items[0].title)
+        self.assertEqual(
+            "2 Set Replacement Parts Roller Brushes Compatible for iRobot Roomba E I and J Series, "
+            "Brush Replacement for iRobot Roomba i3 i3+ i6 i6+ i7 i7+ i8 i8+Plus E5 E6 E7 j7 j7+ evo "
+            "Vacuum Cleaner Accessories",
+            order.items[0].title,
+        )
         self.assertEqual(2, order.items[0].quantity)
         self.assertIsNotNone(order.items[0].link)
         self.assertIsNotNone(order.items[0].image_link)
@@ -401,8 +394,7 @@ class TestCase(unittest.TestCase):
             self.assertEqual(26.58, order.total_before_tax)
             self.assertEqual(1.92, order.estimated_tax)
             self.assertEqual(13.99, order.items[0].price)
-            self.assertEqual("xianbaikeshang",
-                             order.items[0].seller.name)
+            self.assertEqual("xianbaikeshang", order.items[0].seller.name)
             self.assertIsNotNone(order.items[0].seller.link)
 
     def assert_order_112_4482432_2955442_gift_card(self, order, full_details=False):
@@ -413,8 +405,7 @@ class TestCase(unittest.TestCase):
         self.assertIsNone(order.recipient)
         self.assertEqual(0, len(order.shipments))
         self.assertEqual(1, len(order.items))
-        self.assertEqual("Amazon eGift Card - Amazon Logo (Animated)",
-                         order.items[0].title)
+        self.assertEqual("Amazon eGift Card - Amazon Logo (Animated)", order.items[0].title)
         self.assertIsNotNone(order.items[0].link)
         self.assertIsNotNone(order.items[0].image_link)
 
@@ -437,8 +428,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(date(2024, 10, 30), order.order_placed_date)
         self.assertEqual(0, len(order.shipments))
         self.assertEqual(1, len(order.items))
-        self.assertEqual("$10 -PlayStation Store Gift Card [Digital Code]",
-                         order.items[0].title)
+        self.assertEqual("$10 -PlayStation Store Gift Card [Digital Code]", order.items[0].title)
         self.assertIsNotNone(order.items[0].link)
         self.assertIsNotNone(order.items[0].image_link)
 
@@ -454,13 +444,13 @@ class TestCase(unittest.TestCase):
         self.assertEqual("Alex Laird", order.recipient.name)
         self.assertIn("555 My Road", order.recipient.address)
         self.assertEqual(1, len(order.shipments))
-        self.assertEqual(str(order.items),
-                         str(order.shipments[0].items))
+        self.assertEqual(str(order.items), str(order.shipments[0].items))
         self.assertIsNotNone(order.shipments[0].tracking_link)
         self.assertEqual("Delivered October 26", order.shipments[0].delivery_status)
         self.assertEqual(1, len(order.items))
-        self.assertEqual("Bounty Paper Towels Quick Size, White, 16 Family Rolls = 40 Regular Rolls",
-                         order.items[0].title)
+        self.assertEqual(
+            "Bounty Paper Towels Quick Size, White, 16 Family Rolls = 40 Regular Rolls", order.items[0].title
+        )
         self.assertIsNotNone(order.items[0].link)
         self.assertIsNotNone(order.items[0].image_link)
 
@@ -476,8 +466,7 @@ class TestCase(unittest.TestCase):
             self.assertEqual(41.32, order.total_before_tax)
             self.assertEqual(3.14, order.estimated_tax)
             self.assertEqual(43.49, order.items[0].price)
-            self.assertEqual("Amazon.com",
-                             order.items[0].seller.name)
+            self.assertEqual("Amazon.com", order.items[0].seller.name)
             self.assertIsNone(order.items[0].seller.link)
 
     def assert_order_111_6778632_7354601_data_component_subscription(self, order, full_details=False):
@@ -488,20 +477,20 @@ class TestCase(unittest.TestCase):
         self.assertEqual("Name1 & Name2", order.recipient.name)
         self.assertIn("Address2", order.recipient.address)
         self.assertEqual(2, len(order.shipments))
-        self.assertEqual(str(order.items.sort()),
-                         str((order.shipments[0].items + order.shipments[1].items).sort()))
+        self.assertEqual(str(order.items.sort()), str((order.shipments[0].items + order.shipments[1].items).sort()))
         self.assertEqual(3, len(order.shipments[0].items))
         self.assertEqual(1, len(order.shipments[1].items))
         self.assertEqual("Delivered September 9", order.shipments[0].delivery_status)
         self.assertEqual("Delivered September 9", order.shipments[1].delivery_status)
         self.assertEqual(4, len(order.items))
         self.assertEqual(
-            "Dxhycc Satin Pirate Sash Pirate Medieval Renaissance Large Sash Halloween Costume Waist "
-            "Sash Belt, Red",
-            order.items[0].title)
-        self.assertEqual("Ziploc Paper Sandwich and Snack Bags, Recyclable & Sealable with Fun Designs, "
-                         "150 Total Bags",
-                         order.items[3].title)
+            "Dxhycc Satin Pirate Sash Pirate Medieval Renaissance Large Sash Halloween Costume Waist Sash Belt, Red",
+            order.items[0].title,
+        )
+        self.assertEqual(
+            "Ziploc Paper Sandwich and Snack Bags, Recyclable & Sealable with Fun Designs, 150 Total Bags",
+            order.items[3].title,
+        )
         self.assertIsNotNone(order.items[0].link)
         self.assertIsNotNone(order.items[0].image_link)
         self.assertIsNotNone(order.items[3].link)

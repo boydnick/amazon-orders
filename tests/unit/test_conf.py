@@ -6,7 +6,6 @@ import shutil
 from unittest import TestCase
 
 import yaml
-
 from amazonorders import conf
 from amazonorders.conf import AmazonOrdersConfig
 
@@ -30,10 +29,9 @@ class TestConf(TestCase):
         self.assertFalse(os.path.exists(self.test_cookie_jar_path))
 
         # GIVEN
-        config = AmazonOrdersConfig(data={
-            "output_dir": self.test_output_dir,
-            "cookie_jar_path": self.test_cookie_jar_path
-        })
+        config = AmazonOrdersConfig(
+            data={"output_dir": self.test_output_dir, "cookie_jar_path": self.test_cookie_jar_path}
+        )
 
         # THEN
         self.assertEqual(5, config.auth_reattempt_wait)
@@ -53,32 +51,29 @@ class TestConf(TestCase):
         # THEN
         thread_pool_size = os.cpu_count() * 4
         self.assertTrue(os.path.exists(config_path))
-        with open(config.config_path, "r") as f:
-            self.assertEqual("""auth_reattempt_wait: 5
+        with open(config.config_path) as f:
+            self.assertEqual(
+                f"""auth_reattempt_wait: 5
 bs4_parser: html.parser
-connection_pool_size: {connection_pool_size}
+connection_pool_size: {thread_pool_size * 2}
 constants_class: amazonorders.constants.Constants
-cookie_jar_path: {cookie_jar_path}
+cookie_jar_path: {self.test_cookie_jar_path}
 item_class: amazonorders.entity.item.Item
 max_auth_attempts: 10
 max_auth_retries: 1
 order_class: amazonorders.entity.order.Order
-output_dir: {output_dir}
+output_dir: {self.test_output_dir}
 selectors_class: amazonorders.selectors.Selectors
 shipment_class: amazonorders.entity.shipment.Shipment
 thread_pool_size: {thread_pool_size}
-"""
-                             .format(connection_pool_size=thread_pool_size * 2,
-                                     cookie_jar_path=self.test_cookie_jar_path,
-                                     output_dir=self.test_output_dir,
-                                     thread_pool_size=thread_pool_size), f.read())
+""",
+                f.read(),
+            )
 
     def test_override_default(self):
         # GIVEN
         # Default is 10
-        config = AmazonOrdersConfig(data={
-            "max_auth_attempts": 11
-        })
+        config = AmazonOrdersConfig(data={"max_auth_attempts": 11})
 
         self.assertEqual(11, config.max_auth_attempts)
 
@@ -89,14 +84,13 @@ thread_pool_size: {thread_pool_size}
         test_cookie_jar_path = os.path.join(conf.DEFAULT_CONFIG_DIR, "load-from-config-cookies.json")
         os.makedirs(conf.DEFAULT_CONFIG_DIR)
         with open(config_path, "w") as f:
-            f.write("""cookie_jar_path: {cookie_jar_path}
+            f.write(
+                """cookie_jar_path: {cookie_jar_path}
 max_auth_attempts: 11
 output_dir: {output_dir}
 some_custom_config: {custom_config}
-"""
-                    .format(cookie_jar_path=test_cookie_jar_path,
-                            output_dir=test_output_dir,
-                            custom_config="my-custom-config"))
+""".format(cookie_jar_path=test_cookie_jar_path, output_dir=test_output_dir, custom_config="my-custom-config")
+            )
 
         # WHEN
         config = AmazonOrdersConfig(config_path=config_path)
@@ -109,9 +103,7 @@ some_custom_config: {custom_config}
 
     def test_update_config(self):
         # GIVEN
-        config = AmazonOrdersConfig(data={
-            "max_auth_attempts": 11
-        })
+        config = AmazonOrdersConfig(data={"max_auth_attempts": 11})
 
         self.assertEqual(11, config.max_auth_attempts)
 
@@ -124,7 +116,7 @@ some_custom_config: {custom_config}
         self.assertEqual(7, config.max_auth_attempts)
         self.assertEqual("test-username", config.username)
         self.assertEqual("test-otp-secret-key", config.otp_secret_key)
-        with open(config.config_path, "r") as f:
+        with open(config.config_path) as f:
             persisted_config = yaml.safe_load(f)
             self.assertEqual(7, persisted_config["max_auth_attempts"])
             self.assertEqual("test-username", persisted_config["username"])

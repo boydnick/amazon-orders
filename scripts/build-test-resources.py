@@ -8,13 +8,11 @@ import os
 import re
 import sys
 
-from bs4 import BeautifulSoup
-
 from amazonorders.conf import AmazonOrdersConfig
 from amazonorders.session import AmazonSession
+from bs4 import BeautifulSoup
 
-ROOT_DIR = os.path.normpath(
-    os.path.join(os.path.abspath(os.path.dirname(__file__)), ".."))
+ROOT_DIR = os.path.normpath(os.path.join(os.path.abspath(os.path.dirname(__file__)), ".."))
 
 
 def _obfuscate(response_parsed, hide_data_rules):
@@ -89,7 +87,9 @@ def build_test_resources(args):
 
             page_name = f"order-details-{page['order-id']}.html"
         else:
-            url = f"{config.constants.ORDER_HISTORY_URL}?timeFilter=year-{page['year']}&startIndex={page['start-index']}"
+            url = (
+                f"{config.constants.ORDER_HISTORY_URL}?timeFilter=year-{page['year']}&startIndex={page['start-index']}"
+            )
             session_response = amazon_session.get(url)
             response_parsed = BeautifulSoup(session_response.response.text, "html.parser")
 
@@ -97,13 +97,13 @@ def build_test_resources(args):
 
             page_name = f"order-history-{page['year']}-{page['start-index']}.html"
 
-        with open(os.path.join(ROOT_DIR, "tests", "resources", page_name), "w",
-                  encoding="utf-8") as html_file:
+        with open(os.path.join(ROOT_DIR, "tests", "resources", page_name), "w", encoding="utf-8") as html_file:
             html_file.write(str(cleaned_response))
 
     print(
         "\nDONE: Test resources update from live data. Be sure to verify data was properly "
-        "obfuscated before committing any changes.")
+        "obfuscated before committing any changes."
+    )
 
 
 if __name__ == "__main__":

@@ -6,11 +6,10 @@ import os
 from unittest.mock import patch
 
 import responses
-from bs4 import BeautifulSoup
-
-from amazonorders.exception import AmazonOrdersError, AmazonOrdersAuthRedirectError
+from amazonorders.exception import AmazonOrdersAuthRedirectError, AmazonOrdersError
 from amazonorders.session import AmazonSession
 from amazonorders.transactions import AmazonTransactions, _parse_transaction_form_tag
+from bs4 import BeautifulSoup
 from tests.unittestcase import UnitTestCase
 
 
@@ -18,9 +17,7 @@ class TestTransactions(UnitTestCase):
     def setUp(self):
         super().setUp()
 
-        self.amazon_session = AmazonSession("some-username",
-                                            "some-password",
-                                            config=self.test_config)
+        self.amazon_session = AmazonSession("some-username", "some-password", config=self.test_config)
 
         self.amazon_transactions = AmazonTransactions(self.amazon_session)
 
@@ -54,8 +51,9 @@ class TestTransactions(UnitTestCase):
         mock_today.date.today.return_value = datetime.date(2024, 10, 11)
         days = 1
         self.amazon_session.is_authenticated = True
-        with open(os.path.join(self.RESOURCES_DIR, "transactions", "get-transactions-snippet.html"), "r",
-                  encoding="utf-8") as f:
+        with open(
+            os.path.join(self.RESOURCES_DIR, "transactions", "get-transactions-snippet.html"), encoding="utf-8"
+        ) as f:
             resp = responses.add(
                 responses.POST,
                 f"{self.test_config.constants.TRANSACTION_HISTORY_URL}",
@@ -74,8 +72,9 @@ class TestTransactions(UnitTestCase):
         self.assertEqual(transaction.grand_total, -45.19)
         self.assertFalse(transaction.is_refund)
         self.assertEqual(transaction.order_number, "123-4567890-1234567")
-        self.assertEqual(transaction.order_details_link,
-                         "https://www.amazon.ca/gp/css/summary/edit.html?orderID=123-4567890-1234567")
+        self.assertEqual(
+            transaction.order_details_link, "https://www.amazon.ca/gp/css/summary/edit.html?orderID=123-4567890-1234567"
+        )
         self.assertEqual(transaction.seller, "AMZN Mktp CA")
         self.assertEqual(1, resp.call_count)
 
@@ -102,7 +101,7 @@ class TestTransactions(UnitTestCase):
     def test_get_transactions_invalid_page(self):
         # GIVEN
         self.amazon_session.is_authenticated = True
-        with open(os.path.join(self.RESOURCES_DIR, "500.html"), "r", encoding="utf-8") as f:
+        with open(os.path.join(self.RESOURCES_DIR, "500.html"), encoding="utf-8") as f:
             resp = responses.add(
                 responses.POST,
                 f"{self.test_config.constants.TRANSACTION_HISTORY_URL}",
@@ -125,9 +124,9 @@ class TestTransactions(UnitTestCase):
         mock_today.date.today.return_value = datetime.date(2025, 2, 28)
         days = 30
         self.amazon_session.is_authenticated = True
-        with open(os.path.join(self.RESOURCES_DIR, "transactions", "transactions-refunded.html"),
-                  "r",
-                  encoding="utf-8") as f:
+        with open(
+            os.path.join(self.RESOURCES_DIR, "transactions", "transactions-refunded.html"), encoding="utf-8"
+        ) as f:
             resp = responses.add(
                 responses.POST,
                 f"{self.test_config.constants.TRANSACTION_HISTORY_URL}",
@@ -146,8 +145,10 @@ class TestTransactions(UnitTestCase):
         self.assertEqual(transaction.grand_total, 55.96)
         self.assertTrue(transaction.is_refund)
         self.assertEqual(transaction.order_number, "0000000019080621061")
-        self.assertEqual(transaction.order_details_link,
-                         "https://www.amazon.com/gp/your-account/order-details?orderID=0000000019080621061")
+        self.assertEqual(
+            transaction.order_details_link,
+            "https://www.amazon.com/gp/your-account/order-details?orderID=0000000019080621061",
+        )
         self.assertIsNone(transaction.seller)
         self.assertEqual(1, resp.call_count)
 
@@ -157,18 +158,18 @@ class TestTransactions(UnitTestCase):
         # GIVEN
         mock_today.date.today.return_value = datetime.date(2025, 5, 27)
         self.amazon_session.is_authenticated = True
-        with open(os.path.join(self.RESOURCES_DIR, "transactions", "transactions-with-next-page.html"),
-                  "r",
-                  encoding="utf-8") as f:
+        with open(
+            os.path.join(self.RESOURCES_DIR, "transactions", "transactions-with-next-page.html"), encoding="utf-8"
+        ) as f:
             resp1 = responses.add(
                 responses.POST,
                 f"{self.test_config.constants.TRANSACTION_HISTORY_URL}",
                 body=f.read(),
                 status=200,
             )
-        with open(os.path.join(self.RESOURCES_DIR, "transactions", "transactions-in-progress.html"),
-                  "r",
-                  encoding="utf-8") as f:
+        with open(
+            os.path.join(self.RESOURCES_DIR, "transactions", "transactions-in-progress.html"), encoding="utf-8"
+        ) as f:
             resp2 = responses.add(
                 responses.POST,
                 f"{self.test_config.constants.TRANSACTION_HISTORY_URL}",
@@ -191,9 +192,9 @@ class TestTransactions(UnitTestCase):
         mock_today.date.today.return_value = datetime.date(2025, 2, 13)
         days = 30
         self.amazon_session.is_authenticated = True
-        with open(os.path.join(self.RESOURCES_DIR, "transactions", "transactions-in-progress.html"),
-                  "r",
-                  encoding="utf-8") as f:
+        with open(
+            os.path.join(self.RESOURCES_DIR, "transactions", "transactions-in-progress.html"), encoding="utf-8"
+        ) as f:
             resp = responses.add(
                 responses.POST,
                 f"{self.test_config.constants.TRANSACTION_HISTORY_URL}",
@@ -212,8 +213,10 @@ class TestTransactions(UnitTestCase):
         self.assertEqual(transaction.grand_total, -26.29)
         self.assertFalse(transaction.is_refund)
         self.assertEqual(transaction.order_number, "234-8832881-7100260")
-        self.assertEqual(transaction.order_details_link,
-                         "https://www.amazon.com/gp/css/summary/edit.html?orderID=234-8832881-7100260")
+        self.assertEqual(
+            transaction.order_details_link,
+            "https://www.amazon.com/gp/css/summary/edit.html?orderID=234-8832881-7100260",
+        )
         self.assertEqual(transaction.seller, "AMZN Mktp US")
         transaction = transactions[1]
         self.assertEqual(transaction.completed_date, datetime.date(2025, 2, 7))
@@ -221,8 +224,10 @@ class TestTransactions(UnitTestCase):
         self.assertEqual(transaction.grand_total, 43.94)
         self.assertTrue(transaction.is_refund)
         self.assertEqual(transaction.order_number, "234-3017692-4601031")
-        self.assertEqual(transaction.order_details_link,
-                         "https://www.amazon.com/gp/css/summary/edit.html?orderID=234-3017692-4601031")
+        self.assertEqual(
+            transaction.order_details_link,
+            "https://www.amazon.com/gp/css/summary/edit.html?orderID=234-3017692-4601031",
+        )
         self.assertEqual(transaction.seller, "AMZN Mktp US")
         self.assertEqual(1, resp.call_count)
 
@@ -233,9 +238,9 @@ class TestTransactions(UnitTestCase):
         mock_today.date.today.return_value = datetime.date(2025, 2, 19)
         days = 30
         self.amazon_session.is_authenticated = True
-        with open(os.path.join(self.RESOURCES_DIR, "transactions", "transactions-grand-total-blank.html"),
-                  "r",
-                  encoding="utf-8") as f:
+        with open(
+            os.path.join(self.RESOURCES_DIR, "transactions", "transactions-grand-total-blank.html"), encoding="utf-8"
+        ) as f:
             resp = responses.add(
                 responses.POST,
                 f"{self.test_config.constants.TRANSACTION_HISTORY_URL}",
@@ -254,9 +259,9 @@ class TestTransactions(UnitTestCase):
     def test_get_transactions_zero_transactions(self):
         # GIVEN
         self.amazon_session.is_authenticated = True
-        with open(os.path.join(self.RESOURCES_DIR, "transactions", "transactions-zero-transactions.html"),
-                  "r",
-                  encoding="utf-8") as f:
+        with open(
+            os.path.join(self.RESOURCES_DIR, "transactions", "transactions-zero-transactions.html"), encoding="utf-8"
+        ) as f:
             responses.add(
                 responses.POST,
                 f"{self.test_config.constants.TRANSACTION_HISTORY_URL}",
@@ -272,16 +277,12 @@ class TestTransactions(UnitTestCase):
 
     def test_parse_transaction_form_tag(self):
         # GIVEN
-        with open(os.path.join(self.RESOURCES_DIR, "transactions", "transaction-form-tag.html"),
-                  "r",
-                  encoding="utf-8") as f:
+        with open(os.path.join(self.RESOURCES_DIR, "transactions", "transaction-form-tag.html"), encoding="utf-8") as f:
             parsed = BeautifulSoup(f.read(), self.test_config.bs4_parser)
             form_tag = parsed.select_one("form")
 
         # WHEN
-        transactions, next_page_data = _parse_transaction_form_tag(
-            form_tag, self.test_config
-        )
+        transactions, next_page_data = _parse_transaction_form_tag(form_tag, self.test_config)
 
         # THEN
         self.assertEqual(len(transactions), 2)
